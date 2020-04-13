@@ -7,4 +7,4 @@
 ![euO7nrfoP1QWK9w](https://i.loli.net/2020/04/13/euO7nrfoP1QWK9w.jpg)
 
 ## 项目重大更新记录
-- 2020-04-13 新建项目
+* 2020-04-13 新建项目
