@@ -1,7 +1,7 @@
 from flask import request
 from flask_restful import Resource
 
-from app import DBSession
+from model.Database import DBSession
 from model.models import User
 
 
