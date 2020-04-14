@@ -20,10 +20,5 @@ CS307-12306的后端被设计为与数据库交互的、纯粹的Restful API。
 
 ## 用户登录相关API
 
-| ID   | 调用方式 | API URL              | 用途         | 参数说明                                 |
-| ---- | -------- | -------------------- | ------------ | ---------------------------------------- |
-| 1    | GET      | /api/user/username | 获取用户信息 | `username`：用户名                       |
-| 2    | POST     | /api/user            | 用户注册     | `username`：用户名，`password`：密码 |
-| 3    | PATCH    | /api/user            | 用户修改密码 | `username`：用户名，`password`：密码 |
-| 4    | DELETE   | /api/user/username | 删除用户数据 | `username`：用户名                       |
-
+- [x] 注册API：/auth/signup
+- [x] 登录API：/auth/login

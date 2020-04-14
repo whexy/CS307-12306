@@ -5,6 +5,7 @@ from flask_restful import Api
 
 from api.user import LoginApi
 from api.user import SignupApi
+from api.user import UserInfoApi
 
 app = Flask(__name__)
 
@@ -19,6 +20,6 @@ jwt = JWTManager(app)
 # API
 api.add_resource(SignupApi, '/auth/signup')
 api.add_resource(LoginApi, '/auth/login')
-
+api.add_resource(UserInfoApi, '/user')
 # RunTime
 app.run()
