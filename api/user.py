@@ -65,4 +65,5 @@ class UserInfoApi(Resource):
         user.phone_number = body.get('phone_number')
         if body.get('new_password'):
             user.password = body.get('new_password')
+            user.hash_password()
         session.commit()
