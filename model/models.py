@@ -44,7 +44,7 @@ class User(Base):
     phone_number = Column(String(45), nullable=False)
     real_name = Column(String(45), nullable=False)
     email = Column(String(45), nullable=False)
-    password = Column(String(45), nullable=False)
+    password = Column(String(100), nullable=False)
 
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
