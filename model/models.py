@@ -52,6 +52,14 @@ class User(Base):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'phone_number': self.phone_number,
+            'real_name': self.real_name,
+            'email': self.email,
+        }
+
 
 class Station(Base):
     __tablename__ = 'station'
