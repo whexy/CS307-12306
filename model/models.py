@@ -1,6 +1,7 @@
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from flask_bcrypt import generate_password_hash, check_password_hash
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -44,6 +45,12 @@ class User(Base):
     real_name = Column(String(45), nullable=False)
     email = Column(String(45), nullable=False)
     password = Column(String(45), nullable=False)
+
+    def hash_password(self):
+        self.password = generate_password_hash(self.password).decode('utf8')
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
 
 class Station(Base):
