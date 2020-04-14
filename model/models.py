@@ -1,6 +1,6 @@
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint, text
-from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -19,7 +19,8 @@ class Seat(Base):
         Index('seat_carriage_number_seat_number_uindex', 'carriage_number', 'seat_number', unique=True),
     )
 
-    seat_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('seat_seat_id_seq'::regclass)"))
+    seat_id = Column(Integer, primary_key=True, unique=True,
+                     server_default=text("nextval('seat_seat_id_seq'::regclass)"))
     carriage_number = Column(Integer, nullable=False)
     seat_number = Column(String(10), nullable=False)
     seat_type = Column(String(10), nullable=False)
@@ -36,7 +37,8 @@ class Train(Base):
 class User(Base):
     __tablename__ = 'users'
 
-    user_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('user_user_id_seq'::regclass)"))
+    user_id = Column(Integer, primary_key=True, unique=True,
+                     server_default=text("nextval('user_user_id_seq'::regclass)"))
     username = Column(String(255), nullable=False, unique=True)
     phone_number = Column(String(45), nullable=False)
     real_name = Column(String(45), nullable=False)
@@ -93,10 +95,12 @@ class Price(Base):
 class Ticket(Base):
     __tablename__ = 'ticket'
     __table_args__ = (
-        Index('ticket_first_interval_last_interval_seat_id_available_uindex', 'first_interval', 'last_interval', 'seat_id', 'available', unique=True),
+        Index('ticket_first_interval_last_interval_seat_id_available_uindex', 'first_interval', 'last_interval',
+              'seat_id', 'available', unique=True),
     )
 
-    ticket_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('ticket_ticket_id_seq'::regclass)"))
+    ticket_id = Column(Integer, primary_key=True, unique=True,
+                       server_default=text("nextval('ticket_ticket_id_seq'::regclass)"))
     first_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     last_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     seat_id = Column(ForeignKey('seat.seat_id'), nullable=False)
