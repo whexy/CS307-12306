@@ -25,7 +25,7 @@ class LoginApi(Resource):
         body = request.get_json()
         # user = User.query().filter_by(username=body.get('username')).first()
         session = DBSession()
-        user = session.query(User).filter(User.username.has(username=body.get('username')))
+        user = session.query(User).filter(User.username == body.get('username')).first()
         if user is None:
             return {'error': 'Username not found'}, 401
         authorized = user.check_password(body.get('password'))
