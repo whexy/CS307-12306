@@ -1,4 +1,3 @@
-# coding: utf-8
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -35,7 +34,7 @@ class Train(Base):
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
 
     user_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('user_user_id_seq'::regclass)"))
     username = Column(String(255), nullable=False, unique=True)
@@ -101,7 +100,7 @@ class Ticket(Base):
     first_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     last_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     seat_id = Column(ForeignKey('seat.seat_id'), nullable=False)
-    user_id = Column(ForeignKey('user.user_id'), nullable=False)
+    user_id = Column(ForeignKey('users.user_id'), nullable=False)
     available = Column(Boolean, nullable=False)
 
     interval = relationship('Interval', primaryjoin='Ticket.first_interval == Interval.interval_id')
