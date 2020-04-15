@@ -49,5 +49,31 @@ def gao1():
                     print(s)
 
 
+def gao2():
+    with open('../Resources/没查到的.txt', 'r') as fin:
+        cha = list(map(lambda x: x.split()[0], fin.read().splitlines()))
+    with open('../Resources/station_city.csv', 'a') as csv:
+        for s in cha:
+            c = requests.get(
+                'https://restapi.amap.com/v3/place/text?key={}&keywords={}&types=&city=&children=1&offset=&page=&extensions=base'.format(
+                    'b940f83a96d4391b0f20e08770cda1a7',
+                    s)).text
+            j = json.loads(c)
+            g = j['pois']
+            if g:
+                csv.write('{},{},{},{}\n'.format(s, g[0]['pname'], g[0]['cityname'], g[0]['adname']))
+            else:
+                c = requests.get(
+                    'https://restapi.amap.com/v3/place/text?key={}&keywords={}&types=&city=&children=1&offset=&page=&extensions=base'.format(
+                        'b940f83a96d4391b0f20e08770cda1a7',
+                        s + '站')).text
+                j = json.loads(c)
+                g = j['pois']
+                if g:
+                    csv.write('{},{},{},{}\n'.format(s, g[0]['pname'], g[0]['cityname'], g[0]['adname']))
+                else:
+                    print(s)
+
+
 if __name__ == '__main__':
-    gao1()
+    gao2()
