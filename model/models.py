@@ -7,33 +7,18 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
-class City(Base):
-    __tablename__ = 'city'
+class Province(Base):
+    __tablename__ = 'province'
 
-    city_id = Column(Integer, primary_key=True)
-    city_name = Column(String(32), nullable=False, unique=True)
-
-
-class Seat(Base):
-    __tablename__ = 'seat'
-    __table_args__ = (
-        Index('seat_carriage_number_seat_number_uindex', 'carriage_number', 'seat_number', unique=True),
-    )
-
-    seat_id = Column(Integer, primary_key=True, unique=True,
-                     server_default=text("nextval('seat_seat_id_seq'::regclass)"))
-    carriage_number = Column(Integer, nullable=False)
-    seat_number = Column(String(10), nullable=False)
-    seat_type = Column(String(10), nullable=False)
-    is_available = Column(Boolean, nullable=False)
-    interval_id = Column(ForeignKey('interval.interval_id'), nullable=False)
-    interval = relationship('Interval')
+    province_id = Column(Integer, primary_key=True, unique=True,
+                         server_default=text("nextval('province_province_id_seq'::regclass)"))
+    province_name = Column(String(45), nullable=False, unique=True)
 
 
 class Train(Base):
     __tablename__ = 'train'
 
-    train_id = Column(Integer, primary_key=True)
+    train_id = Column(Integer, primary_key=True, server_default=text("nextval('train_train_id_seq'::regclass)"))
     train_name = Column(String(15), nullable=False)
 
 
@@ -63,14 +48,35 @@ class User(Base):
         }
 
 
-class Station(Base):
-    __tablename__ = 'station'
+class City(Base):
+    __tablename__ = 'city'
 
-    station_id = Column(Integer, primary_key=True)
-    station_name = Column(String(32), nullable=False, unique=True)
+    city_id = Column(Integer, primary_key=True, server_default=text("nextval('city_city_id_seq'::regclass)"))
+    city_name = Column(String(32), nullable=False, unique=True)
+    province_id = Column(ForeignKey('province.province_id'), nullable=False)
+
+    province = relationship('Province')
+
+
+class District(Base):
+    __tablename__ = 'district'
+
+    district_id = Column(Integer, primary_key=True, unique=True,
+                         server_default=text("nextval('district_district_id_seq'::regclass)"))
+    district_name = Column(String(45), nullable=False)
     city_id = Column(ForeignKey('city.city_id'), nullable=False)
 
     city = relationship('City')
+
+
+class Station(Base):
+    __tablename__ = 'station'
+
+    station_id = Column(Integer, primary_key=True, server_default=text("nextval('station_station_id_seq'::regclass)"))
+    station_name = Column(String(32), nullable=False, unique=True)
+    district_id = Column(ForeignKey('district.district_id'), nullable=False)
+
+    district = relationship('District')
 
 
 class Interval(Base):
@@ -79,7 +85,8 @@ class Interval(Base):
         UniqueConstraint('train_id', 'dep_station', 'arv_station'),
     )
 
-    interval_id = Column(Integer, primary_key=True)
+    interval_id = Column(Integer, primary_key=True,
+                         server_default=text("nextval('interval_interval_id_seq'::regclass)"))
     train_id = Column(ForeignKey('train.train_id'), nullable=False)
     dep_station = Column(ForeignKey('station.station_id'), nullable=False)
     arv_station = Column(ForeignKey('station.station_id'), nullable=False)
@@ -99,7 +106,7 @@ class Price(Base):
         UniqueConstraint('first_interval', 'last_interval', 'seat_type'),
     )
 
-    price_id = Column(Integer, primary_key=True)
+    price_id = Column(Integer, primary_key=True, server_default=text("nextval('prices_price_id_seq'::regclass)"))
     first_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     last_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     seat_type = Column(Integer, nullable=False)
@@ -107,6 +114,23 @@ class Price(Base):
 
     interval = relationship('Interval', primaryjoin='Price.first_interval == Interval.interval_id')
     interval1 = relationship('Interval', primaryjoin='Price.last_interval == Interval.interval_id')
+
+
+class Seat(Base):
+    __tablename__ = 'seat'
+    __table_args__ = (
+        Index('seat_carriage_number_seat_number_uindex', 'carriage_number', 'seat_number', unique=True),
+    )
+
+    seat_id = Column(Integer, primary_key=True, unique=True,
+                     server_default=text("nextval('seat_seat_id_seq'::regclass)"))
+    carriage_number = Column(Integer, nullable=False)
+    seat_number = Column(String(10), nullable=False)
+    seat_type = Column(String(10), nullable=False)
+    is_available = Column(Boolean, nullable=False)
+    interval_id = Column(ForeignKey('interval.interval_id'), nullable=False)
+
+    interval = relationship('Interval')
 
 
 class Ticket(Base):
@@ -136,7 +160,7 @@ class Order(Base):
         UniqueConstraint('order_timestamp', 'ticket_id', 'order_status'),
     )
 
-    order_id = Column(Integer, primary_key=True)
+    order_id = Column(Integer, primary_key=True, server_default=text("nextval('orders_order_id_seq'::regclass)"))
     order_timestamp = Column(DateTime, nullable=False)
     ticket_id = Column(ForeignKey('ticket.ticket_id'), nullable=False)
     order_status = Column(String(16), nullable=False)
