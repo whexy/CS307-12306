@@ -1,7 +1,7 @@
+from flask_bcrypt import generate_password_hash, check_password_hash
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from flask_bcrypt import generate_password_hash, check_password_hash
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -26,6 +26,8 @@ class Seat(Base):
     seat_number = Column(String(10), nullable=False)
     seat_type = Column(String(10), nullable=False)
     is_available = Column(Boolean, nullable=False)
+    interval_id = Column(ForeignKey('interval.interval_id'), nullable=False)
+    interval = relationship('Interval')
 
 
 class Train(Base):
