@@ -1,5 +1,6 @@
 from flask_bcrypt import generate_password_hash, check_password_hash
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint, text
+from sqlalchemy import Column, ForeignKey, Integer, String, Time, UniqueConstraint, text, Float, Index, Boolean, \
+    DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -90,8 +91,8 @@ class Interval(Base):
     train_id = Column(ForeignKey('train.train_id'), nullable=False)
     dep_station = Column(ForeignKey('station.station_id'), nullable=False)
     arv_station = Column(ForeignKey('station.station_id'), nullable=False)
-    dep_datetime = Column(DateTime, nullable=False)
-    arv_datetime = Column(DateTime, nullable=False)
+    dep_datetime = Column(Time, nullable=False)
+    arv_datetime = Column(Time, nullable=False)
     prev_id = Column(Integer)
     next_id = Column(Integer)
 
