@@ -20,7 +20,7 @@ class SignupApi(Resource):
         return 200
 
 
-class LoginApi(Resource):
+class UserInfoApi(Resource):
     def post(self):
         body = request.get_json()
         # user = User.query().filter_by(username=body.get('username')).first()
@@ -35,8 +35,6 @@ class LoginApi(Resource):
         access_token = create_access_token(identity=str(user.user_id), expires_delta=expires)
         return {'token': access_token}, 200
 
-
-class UserInfoApi(Resource):
     @jwt_required
     def get(self):
         user_id = get_jwt_identity()

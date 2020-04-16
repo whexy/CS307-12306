@@ -3,9 +3,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
-from api.user import LoginApi
-from api.user import SignupApi
-from api.user import UserInfoApi
+from api.route import initialize_routes
 
 app = Flask(__name__)
 
@@ -18,8 +16,8 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
 # API
-api.add_resource(SignupApi, '/auth/signup')
-api.add_resource(LoginApi, '/auth/login')
-api.add_resource(UserInfoApi, '/user')
-# RunTime
-app.run()
+initialize_routes(api)
+
+if __name__ == '__main__':
+    # RunTime
+    app.run()
