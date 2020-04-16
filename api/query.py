@@ -54,18 +54,18 @@ where i.train_id in
        from interval
        where dep_station in (select station_id
                              from station_table
-                             where station_name like '%{}%'
-                                or district_name like '%{}%'
-                                or city_name like '%{}%'))
+                             where station_name like '%{0}%'
+                                or district_name like '%{0}%'
+                                or city_name like '%{0}%'))
   and i.train_id in
       (select train_id
        from interval
        where arv_station in (select station_id
                              from station_table
-                             where station_name like '%{}%'
-                                or district_name like '%{}%'
-                                or city_name like '%{}%'))
-        '''.format(depart_place, depart_place, depart_place, arrival_place, arrival_place, arrival_place)
+                             where station_name like '%{1}%'
+                                or district_name like '%{1}%'
+                                or city_name like '%{1}%'))
+        '''.format(depart_place, arrival_place)
 
         session = DBSession()
         resp = []
