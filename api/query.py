@@ -82,7 +82,6 @@ class QueryApiV3(Resource):
     def get(self):
         depart_place = '%' + urllib.parse.unquote(request.args.get('from')) + '%'
         arrival_place = '%' + urllib.parse.unquote(request.args.get('to')) + '%'
-        print(depart_place, arrival_place)
         session = DBSession()
         station_table = session.query(Station.station_name, Station.station_id,
                                       District.district_name, City.city_name) \
