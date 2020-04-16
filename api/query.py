@@ -1,9 +1,12 @@
+import urllib.parse
+
 from flask import request, jsonify
 from flask_restful import Resource
+from sqlalchemy import or_
 
 from model.Database import DBSession
 from model.Utils import get_nearby_station
-from model.models import Interval, Train
+from model.models import Interval, Train, Station, District, City
 
 
 class QueryApi(Resource):
@@ -73,3 +76,34 @@ where i.train_id in
         for result in sql_result:
             resp.append({result[0]: result[1]})
         return jsonify(result=resp)
+
+
+class QueryApiV3(Resource):
+    def get(self):
+        depart_place = '%' + urllib.parse.unquote(request.args.get('from')) + '%'
+        arrival_place = '%' + urllib.parse.unquote(request.args.get('to')) + '%'
+        print(depart_place, arrival_place)
+        session = DBSession()
+        station_table = session.query(Station.station_name, Station.station_id,
+                                      District.district_name, City.city_name) \
+            .join(District, Station.district_id == District.district_id) \
+            .join(City, District.city_id == City.city_id)
+        depart_train_id = session.query(Interval.train_id) \
+            .filter(Interval.dep_station.in_(station_table.filter(or_(Station.station_name.like(depart_place),
+                                                                      District.district_name.like(depart_place),
+                                                                      City.city_name.like(depart_place))
+                                                                  )
+                                             .with_entities(Station.station_id)))
+        arrival_train_id = session.query(Interval.train_id) \
+            .filter(Interval.arv_station.in_(station_table.filter(or_(Station.station_name.like(arrival_place),
+                                                                      District.district_name.like(arrival_place),
+                                                                      City.city_name.like(arrival_place))
+                                                                  )
+                                             .with_entities(Station.station_id)))
+        train_info = session.query(Interval.train_id, Train.train_name) \
+            .join(Train, Train.train_id == Interval.train_id) \
+            .filter(Interval.train_id.in_(depart_train_id),
+                    Interval.train_id.in_(arrival_train_id)) \
+            .distinct()
+        train_info_list = [{'train_id': info.train_id, "train_name": info.train_name} for info in train_info]
+        return jsonify(result=train_info_list)
