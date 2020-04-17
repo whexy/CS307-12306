@@ -1,12 +1,13 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
+from flask_cors import *
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
 from api.route import initialize_routes
 
 app = Flask(__name__)
-
+CORS(app, supports_credentials=True)
 # APP config
 app.config["JWT_SECRET_KEY"] = 'Thi5JWT5ecretKey1sHardT0Gue55'
 

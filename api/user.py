@@ -22,6 +22,7 @@ class SignupApi(Resource):
 
 
 class UserInfoApi(Resource):
+    # Login API
     def post(self):
         body = request.get_json()
         session = DBSession()
@@ -35,6 +36,7 @@ class UserInfoApi(Resource):
         access_token = create_access_token(identity=str(user.user_id), expires_delta=expires)
         return jsonify(token=access_token, code=0)
 
+    # Get user info
     @jwt_required
     def get(self):
         user_id = get_jwt_identity()
