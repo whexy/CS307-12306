@@ -13,12 +13,12 @@ class SignupApi(Resource):
         body = request.get_json()
         session = DBSession()
         if session.query(User).filter(User.username == body.get('username')).first() is not None:
-            return {'error': 'Username already exists!'}, 406
+            return jsonify(error='Username already exists', code=406)
         new_user = User(**body)
         new_user.hash_password()
         session.add(new_user)
         session.commit()
-        return 200
+        return jsonify(code=0)
 
 
 class UserInfoApi(Resource):
@@ -27,13 +27,13 @@ class UserInfoApi(Resource):
         session = DBSession()
         user = session.query(User).filter(User.username == body.get('username')).first()
         if user is None:
-            return {'error': 'Username not found'}, 401
+            return jsonify(error='Username not found', code=401)
         authorized = user.check_password(body.get('password'))
         if not authorized:
-            return {'error': 'Wrong password'}, 401
+            return jsonify(error='Wrong password', code=401)
         expires = datetime.timedelta(days=1)
         access_token = create_access_token(identity=str(user.user_id), expires_delta=expires)
-        return {'token': access_token}, 200
+        return jsonify(token=access_token, code=0)
 
     @jwt_required
     def get(self):
@@ -41,8 +41,8 @@ class UserInfoApi(Resource):
         session = DBSession()
         user = session.query(User).filter(User.user_id == user_id).first()
         if user is None:
-            return {'error': 'User not found'}, 404
-        return user.to_dict(), 200
+            return jsonify(error='User not found', code=404)
+        return jsonify(**user.to_dict(), code=0)
 
     @jwt_required
     def patch(self):
@@ -51,14 +51,14 @@ class UserInfoApi(Resource):
         session = DBSession()
         user = session.query(User).filter(User.user_id == user_id).first()
         if user is None:
-            return {'error': 'User not found'}, 404
+            return jsonify(error='User not found', code=404)
         authorized = user.check_password(body.get('password'))
         if not authorized:
-            return {'error': 'Wrong password'}, 401
+            return jsonify(error='Wrong password', code=401)
         if user.username != body.get('username'):
             new_username = body.get('username')
             if session.query(User).filter(User.username == new_username).first() is not None:
-                return {'error': 'Username already exists!'}, 406
+                return jsonify(error='Username already exists', code=406)
             user.username = new_username
         user.real_name = body.get('real_name')
         user.email = body.get('email')
@@ -67,6 +67,7 @@ class UserInfoApi(Resource):
             user.password = body.get('new_password')
             user.hash_password()
         session.commit()
+        return jsonify(code=0)
 
 
 class UserCheckApi(Resource):
@@ -74,4 +75,4 @@ class UserCheckApi(Resource):
         username = request.args.get('username')
         session = DBSession()
         user = session.query(User).filter(User.username == username).first()
-        return jsonify(result=(user is None))
+        return jsonify(result=(user is None), code=0)

@@ -105,4 +105,4 @@ class QueryApiV3(Resource):
                     Interval.train_id.in_(arrival_train_id)) \
             .distinct()
         train_info_list = [{'train_id': info.train_id, "train_name": info.train_name} for info in train_info]
-        return jsonify(result=train_info_list)
+        return jsonify(result=train_info_list, code=0)

@@ -13,4 +13,4 @@ class GeoApi(Resource):
         resp = []
         for station in stations:
             resp.append(dict(station_id=station.station_id, station_name=station.station_name))
-        return jsonify(result=resp)
+        return jsonify(result=resp, code=0)
