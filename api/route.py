@@ -1,5 +1,6 @@
 from api.locate import GeoApi
 from api.query import QueryApi, QueryApiV2, QueryApiV3
+from api.ticket import TicketApi
 from api.user import UserInfoApi, SignupApi, UserCheckApi
 
 
@@ -11,3 +12,4 @@ def initialize_routes(api):
     api.add_resource(QueryApiV2, '/query/v2')
     api.add_resource(QueryApiV3, '/query/v3')
     api.add_resource(UserCheckApi, '/user/check')
+    api.add_resource(TicketApi, '/ticket')
