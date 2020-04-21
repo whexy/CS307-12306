@@ -104,17 +104,16 @@ class Interval(Base):
 class Price(Base):
     __tablename__ = 'prices'
     __table_args__ = (
-        UniqueConstraint('first_interval', 'last_interval', 'seat_type'),
+        Index('prices_interval_id_seat_type_id_uindex', 'interval_id', 'seat_type_id', unique=True),
     )
 
     price_id = Column(Integer, primary_key=True, server_default=text("nextval('prices_price_id_seq'::regclass)"))
-    first_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
-    last_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
-    seat_type = Column(Integer, nullable=False)
+    interval_id = Column(ForeignKey('interval.interval_id'), nullable=False)
+    seat_type_id = Column(ForeignKey('seat_type.seat_type_id'), nullable=False)
     price = Column(Float(53), nullable=False)
 
-    interval = relationship('Interval', primaryjoin='Price.first_interval == Interval.interval_id')
-    interval1 = relationship('Interval', primaryjoin='Price.last_interval == Interval.interval_id')
+    interval = relationship('Interval')
+    seat_type = relationship('SeatType')
 
 
 class Seat(Base):
@@ -123,15 +122,15 @@ class Seat(Base):
         Index('seat_carriage_number_seat_number_uindex', 'carriage_number', 'seat_number', unique=True),
     )
 
-    seat_id = Column(Integer, primary_key=True, unique=True,
-                     server_default=text("nextval('seat_seat_id_seq'::regclass)"))
+    seat_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('seat_seat_id_seq'::regclass)"))
     carriage_number = Column(Integer, nullable=False)
     seat_number = Column(String(10), nullable=False)
-    seat_type = Column(String(10), nullable=False)
+    seat_type_id = Column(ForeignKey('seat_type.seat_type_id'), nullable=False)
     is_available = Column(Boolean, nullable=False)
     interval_id = Column(ForeignKey('interval.interval_id'), nullable=False)
 
     interval = relationship('Interval')
+    seat_type = relationship('SeatType')
 
 
 class Ticket(Base):
@@ -167,3 +166,10 @@ class Order(Base):
     order_status = Column(String(16), nullable=False)
 
     ticket = relationship('Ticket')
+
+
+class SeatType(Base):
+    __tablename__ = 'seat_type'
+
+    seat_type_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('table_name_seat_type_id_seq'::regclass)"))
+    name = Column(String(16), nullable=False, unique=True)
