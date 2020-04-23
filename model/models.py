@@ -119,18 +119,18 @@ class Price(Base):
 class Seat(Base):
     __tablename__ = 'seat'
     __table_args__ = (
-        Index('seat_carriage_number_seat_number_interval_id_uindex', 'carriage_number', 'seat_number', 'interval_id', unique=True),
+        Index('seat_carriage_number_seat_number_interval_id_uindex', 'carriage_number', 'seat_number', 'train_id', unique=True),
     )
 
     seat_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('seat_seat_id_seq'::regclass)"))
     carriage_number = Column(Integer, nullable=False)
     seat_number = Column(String(10), nullable=False)
     seat_type_id = Column(ForeignKey('seat_type.seat_type_id'), nullable=False)
-    is_available = Column(Boolean, nullable=False)
-    interval_id = Column(ForeignKey('interval.interval_id'), nullable=False)
+    occupied = Column(String(100), nullable=False, server_default=text("0"))
+    train_id = Column(ForeignKey('train.train_id'), nullable=False)
 
-    interval = relationship('Interval')
     seat_type = relationship('SeatType')
+    train = relationship('Train')
 
 
 class Ticket(Base):
