@@ -2,7 +2,7 @@ import os
 
 
 def get_val(x):
-    for i in range(3, 10):
+    for i in range(5, 12):
         try:
             return float(x[i])
         except ValueError:
@@ -11,7 +11,7 @@ def get_val(x):
 
 def gao():
     errors = []
-    for root, subFolders, files in os.walk('/Users/macmo/Downloads/12307_new'):
+    for root, subFolders, files in os.walk('/Users/whexy/Downloads/12307_new'):
         for file in files:
             if file[0] == '.' or not file.endswith('.csv'):
                 continue
@@ -24,14 +24,15 @@ def gao():
                         continue
                     content = sorted(map(lambda x: x.split(','), raw_content), key=get_val)
                     lines = len(content)
-                    with open(os.path.join('/Users/macmo/Downloads/12307_intervals', file), 'w') as out:
+                    with open(os.path.join('/Users/whexy/Downloads/12307_intervals', file), 'w') as out:
                         if not content:
                             print('error')
                             continue
                         out.write(','.join(content[0]) + '\n')
                         for i in range(lines - 1):
-                            new_line = [content[i][0], content[i + 1][1], content[i][1]]
-                            for j in range(3, 10):
+                            new_line = [content[i][0], content[i + 1][1], content[i + 1][2], content[i][1],
+                                        content[i][2]]
+                            for j in range(5, 12):
                                 if content[i][j] == '-':
                                     new_line.append('-')
                                 else:
