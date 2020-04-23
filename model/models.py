@@ -119,7 +119,7 @@ class Price(Base):
 class Seat(Base):
     __tablename__ = 'seat'
     __table_args__ = (
-        Index('seat_carriage_number_seat_number_uindex', 'carriage_number', 'seat_number', unique=True),
+        Index('seat_carriage_number_seat_number_interval_id_uindex', 'carriage_number', 'seat_number', 'interval_id', unique=True),
     )
 
     seat_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('seat_seat_id_seq'::regclass)"))
