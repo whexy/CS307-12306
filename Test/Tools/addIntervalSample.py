@@ -1,33 +1,24 @@
 import os
+import traceback
 from datetime import time
 
-from progressbar import Percentage, Bar, Timer, FileTransferSpeed, ETA, ProgressBar
-
 from model.Database import DBSession
-from model.models import Station, Train, Interval
+from model.models import Station, Train, Interval, Price
 
 session = DBSession()
 
 errors = []
-widgets = ['Progress: ', Percentage(), ' ', Bar('#'), ' ', Timer(),
-           ' ', ETA(), ' ', FileTransferSpeed()]
-for root, subFolders, files in os.walk('/Users/whexy/Downloads/12307_intervals'):
-    pbar = ProgressBar(widgets=widgets, maxval=len(files)).start()
+for root, subFolders, files in os.walk('/Users/whexy/Downloads/12307_intervals_G'):
     for file_i, filename in enumerate(files):
         try:
-            with open(os.path.join(root, filename)) as f:
+            with open(os.path.join(root, filename), "r") as f:
                 train_name = filename.split(".")[0]
+                print("Handling {}, {}".format(file_i, train_name))
                 train: Train = session.query(Train).filter(Train.train_name == train_name).first()
-                if train is not None:
-                    # print("Skip " + train_name)
+                # Impossible to run
+                if train is None:
+                    print("Skip " + train_name)
                     continue
-
-                # print("Handling " + train_name)
-                train = Train(train_name=train_name)
-                session.add(train)
-                session.commit()
-                # print("Train {} not found, add to train table.".format(train_name))
-                session.flush()
 
                 intervals = f.read().splitlines()[::-1]  # 按照逆序读取
                 interval_id_list = []  # 存储 id
@@ -46,13 +37,13 @@ for root, subFolders, files in os.walk('/Users/whexy/Downloads/12307_intervals')
 
                     if dep_s is None:
                         with open("Station_Not_Found.txt", "a+") as f:
-                            # print("Station {} not found".format(dep_s_name))
+                            print("Station {} not found".format(dep_s_name))
                             f.write(dep_s_name + "\n")
                         break
 
                     if arv_s is None:
                         with open("Station_Not_Found.txt", "a+") as f:
-                            # print("Station {} not found".format(arv_s_name))
+                            print("Station {} not found".format(arv_s_name))
                             f.write(arv_s_name + "\n")
                         break
 
@@ -74,17 +65,24 @@ for root, subFolders, files in os.walk('/Users/whexy/Downloads/12307_intervals')
                     interval_id = new_interval.interval_id
                     interval_id_list.append(interval_id)
 
+                    # Add Price
+                    seat_type_id = 1
+                    for price in interval_info[6:]:
+                        if price != '-':
+                            price_obj = Price(interval_id=interval_id, seat_type_id=seat_type_id, price=float(price))
+                            session.add(price_obj)
+                            session.commit()
+                        seat_type_id += 1
+
                 for inv_i, interval_id in enumerate(interval_id_list):
                     interval = session.query(Interval).filter(Interval.interval_id == interval_id).first()
                     interval.next_id = interval_id_list[inv_i + 1] if inv_i < len(interval_id_list) - 1 else None
                     interval.prev_id = interval_id_list[inv_i - 1] if inv_i > 0 else None
                     session.commit()
-                    session.flush()
+
         except:
+            traceback.print_exc()
             with open("error.txt", "a+") as f:
                 f.write(filename + "\n")
-            session = DBSession()
+            session.rollback()
             continue
-        finally:
-            pbar.update(file_i)
-    pbar.finish()
