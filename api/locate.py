@@ -32,37 +32,69 @@ class TrainApi(Resource):
         train_name = request.args.get('train_name')
         session = DBSession()
         train_id = session.query(Train.train_id).filter(Train.train_name == train_name).first()
-        city_name, district_name, station_name, next_id, dep_datetime = \
-            session.query(City.city_name, District.district_name, Station.station_name, Interval.next_id,
-                          Interval.dep_datetime) \
-                .join(Interval, Interval.dep_station == Station.station_id) \
-                .join(District, Station.district_id == District.district_id) \
-                .join(City, District.city_id == City.city_id) \
-                .filter(Interval.train_id == train_id, Interval.prev_id == None).first()
+        interval_list = session.query(Interval.interval_id, City.city_name, District.district_name,
+                                      Station.station_name, Interval.dep_datetime) \
+            .join(Station, Station.station_id == Interval.dep_station) \
+            .join(District, Station.district_id == District.district_id) \
+            .join(City, District.city_id == City.city_id) \
+            .filter(Interval.train_id == train_id) \
+            .order_by(Interval.interval_id) \
+            .all()
 
         resp = []
         id_num = 1
-        resp.append(dict(id=1, district=city_name + ',' + district_name, station=station_name, time=str(dep_datetime)))
-        while next_id:
+        for interval_id, city_name, district_name, station_name, dep_datetime in interval_list:
+            resp.append({
+                'id': id_num,
+                'district': city_name + ',' + district_name,
+                'station': station_name,
+                'time': str(dep_datetime)
+            })
             id_num += 1
-            city_name, district_name, station_name, next_id, dep_datetime = \
-                session.query(City.city_name, District.district_name, Station.station_name, Interval.next_id,
-                              Interval.dep_datetime) \
-                    .join(Interval, Interval.dep_station == Station.station_id) \
-                    .join(District, Station.district_id == District.district_id) \
-                    .join(City, District.city_id == City.city_id) \
-                    .filter(Interval.interval_id == next_id).first()
-            resp.append(dict(id=id_num, district=city_name + ',' + district_name, station=station_name,
-                             time=str(dep_datetime)))
-            if not next_id:
-                city_name, district_name, station_name, dep_datetime = \
-                    session.query(City.city_name, District.district_name, Station.station_name, Interval.arv_datetime) \
-                        .join(Interval, Interval.arv_station == Station.station_id) \
-                        .join(District, Station.district_id == District.district_id) \
-                        .join(City, District.city_id == City.city_id) \
-                        .filter(Interval.train_id == train_id, Interval.next_id == None).first()
-                id_num += 1
-                resp.append(dict(id=id_num, district=city_name + ',' + district_name, station=station_name,
-                                 time=str(dep_datetime)))
-
+        arv_datetime, last_city_name, last_district_name, last_station_name = \
+            session.query(Interval.arv_datetime, City.city_name, District.district_name, Station.station_name) \
+                .join(Station, Station.station_id == Interval.arv_station) \
+                .join(District, Station.district_id == District.district_id) \
+                .join(City, District.city_id == City.city_id) \
+                .filter(Interval.interval_id == interval_list[-1][0]) \
+                .first()
+        resp.append({
+            'id': id_num,
+            'district': last_city_name + ',' + last_district_name,
+            'station': last_station_name,
+            'time': str(arv_datetime)
+        })
+        # city_name, district_name, station_name, next_id, dep_datetime = \
+        #     session.query(City.city_name, District.district_name, Station.station_name, Interval.next_id,
+        #                   Interval.dep_datetime) \
+        #         .join(Interval, Interval.dep_station == Station.station_id) \
+        #         .join(District, Station.district_id == District.district_id) \
+        #         .join(City, District.city_id == City.city_id) \
+        #         .filter(Interval.train_id == train_id, Interval.prev_id == None).first()
+        #
+        # resp = []
+        # id_num = 1
+        # resp.append(dict(id=1, district=city_name + ',' + district_name, station=station_name, time=str(dep_datetime)))
+        # while next_id:
+        #     id_num += 1
+        #     city_name, district_name, station_name, next_id, dep_datetime = \
+        #         session.query(City.city_name, District.district_name, Station.station_name, Interval.next_id,
+        #                       Interval.dep_datetime) \
+        #             .join(Interval, Interval.dep_station == Station.station_id) \
+        #             .join(District, Station.district_id == District.district_id) \
+        #             .join(City, District.city_id == City.city_id) \
+        #             .filter(Interval.interval_id == next_id).first()
+        #     resp.append(dict(id=id_num, district=city_name + ',' + district_name, station=station_name,
+        #                      time=str(dep_datetime)))
+        #     if not next_id:
+        #         city_name, district_name, station_name, dep_datetime = \
+        #             session.query(City.city_name, District.district_name, Station.station_name, Interval.arv_datetime) \
+        #                 .join(Interval, Interval.arv_station == Station.station_id) \
+        #                 .join(District, Station.district_id == District.district_id) \
+        #                 .join(City, District.city_id == City.city_id) \
+        #                 .filter(Interval.train_id == train_id, Interval.next_id == None).first()
+        #         id_num += 1
+        #         resp.append(dict(id=id_num, district=city_name + ',' + district_name, station=station_name,
+        #                          time=str(dep_datetime)))
+        #
         return jsonify(result=resp, code=0)
