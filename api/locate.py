@@ -65,58 +65,7 @@ class TrainApi(Resource):
             'station': last_station_name,
             'time': str(arv_datetime)
         })
-        # city_name, district_name, station_name, next_id, dep_datetime = \
-        #     session.query(City.city_name, District.district_name, Station.station_name, Interval.next_id,
-        #                   Interval.dep_datetime) \
-        #         .join(Interval, Interval.dep_station == Station.station_id) \
-        #         .join(District, Station.district_id == District.district_id) \
-        #         .join(City, District.city_id == City.city_id) \
-        #         .filter(Interval.train_id == train_id, Interval.prev_id == None).first()
-        #
-        # resp = []
-        # id_num = 1
-        # resp.append(dict(id=1, district=city_name + ',' + district_name, station=station_name, time=str(dep_datetime)))
-        # while next_id:
-        #     id_num += 1
-        #     city_name, district_name, station_name, next_id, dep_datetime = \
-        #         session.query(City.city_name, District.district_name, Station.station_name, Interval.next_id,
-        #                       Interval.dep_datetime) \
-        #             .join(Interval, Interval.dep_station == Station.station_id) \
-        #             .join(District, Station.district_id == District.district_id) \
-        #             .join(City, District.city_id == City.city_id) \
-        #             .filter(Interval.interval_id == next_id).first()
-        #     resp.append(dict(id=id_num, district=city_name + ',' + district_name, station=station_name,
-        #                      time=str(dep_datetime)))
-        #     if not next_id:
-        #         city_name, district_name, station_name, dep_datetime = \
-        #             session.query(City.city_name, District.district_name, Station.station_name, Interval.arv_datetime) \
-        #                 .join(Interval, Interval.arv_station == Station.station_id) \
-        #                 .join(District, Station.district_id == District.district_id) \
-        #                 .join(City, District.city_id == City.city_id) \
-        #                 .filter(Interval.train_id == train_id, Interval.next_id == None).first()
-        #         id_num += 1
-        #         resp.append(dict(id=id_num, district=city_name + ',' + district_name, station=station_name,
-        #                          time=str(dep_datetime)))
-        #
         return jsonify(result=resp, code=0)
-
-    '''
-    select interval_id first_id
-    from interval
-    where train_id = '{the-train-id}' and prev_id is null;
-    
-    with recursive successive_train as (
-        select interval_id, next_id
-        from interval
-        where interval_id = '{first-id}'
-        union all
-        select i.interval_id, i.next_id
-        from interval i, successive_train st
-        where st.next_id = i.interval_id
-    )
-    select interval_id
-    from successive_train;
-    '''
 
 
 class TrainApiV2(Resource):

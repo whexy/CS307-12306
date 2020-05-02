@@ -17,7 +17,7 @@ class TicketApi(Resource):
             "departStationEnglish": 'Zhenjiang',
             "arrivalStation": '南京',
             "arrivalStationEnglish": 'Nanjing',
-            "price": '￥29.5 镇江南站售',
+            "price": '￥29.5 南方铁路售',
             "time": '2020年4月18日 07:14',
             "name": '石文轩',
             "idCard": '3211011999****6317',
