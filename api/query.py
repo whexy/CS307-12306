@@ -112,7 +112,7 @@ class QueryApiV3(Resource):
         arv_i = aliased(Interval, name='arv_i')
         dep_s = aliased(Station, name='dep_s')
         arv_s = aliased(Station, name='arv_s')
-        train_info_list = session.query(raw_train_info.c.train_id, raw_train_info.c.train_name,
+        train_info_list = session.query(raw_train_info.c.train_name,
                                         raw_train_info.c.first_interval, raw_train_info.c.last_interval,
                                         dep_s.station_name, func.cast(dep_i.dep_datetime, String),
                                         arv_s.station_name, func.cast(arv_i.arv_datetime, String)) \
@@ -124,7 +124,7 @@ class QueryApiV3(Resource):
             .all()
         train_info_list = list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
                                       map(lambda x: dict(zip(
-                                          ['train_id', 'train_name', 'first_interval', 'last_interval', 'dep_station',
+                                          ['train_name', 'first_interval', 'last_interval', 'dep_station',
                                            'dep_time', 'arv_station', 'arv_time'], x)), train_info_list)))
         return jsonify(result=train_info_list, code=0)
 
