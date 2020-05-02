@@ -139,11 +139,13 @@ class TicketQuery(Resource):
             .join(Train, Train.train_id == Interval.train_id) \
             .filter(Train.train_name == train_name, Interval.prev_id == None) \
             .first()[0]
-        seats_left = session.query(Seat.seat_type_id, func.count().label('left_cnt')) \
+        seats_left = session.query(Seat.seat_type_id, SeatType.name, func.count().label('left_cnt')) \
+            .join(SeatType, SeatType.seat_type_id == Seat.seat_type_id) \
             .join(Train, Train.train_id == Seat.train_id) \
             .filter(Train.train_name == train_name,
                     func.cast(func.substring(Seat.occupied, first_interval - first_id + 1,
                                              last_interval - first_interval + 1), BIGINT) == 0) \
-            .group_by(Seat.seat_type_id) \
+            .group_by(Seat.seat_type_id, SeatType.name) \
             .all()
+        seats_left = list(map(lambda x: {'seat_type_name': x[1], 'left_cnt': x[2]}, seats_left))
         return jsonify(result=seats_left, code=0)
