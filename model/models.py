@@ -1,6 +1,7 @@
 from flask_bcrypt import generate_password_hash, check_password_hash
 from sqlalchemy import Column, ForeignKey, Integer, String, Time, UniqueConstraint, text, Float, Index, Boolean, \
     DateTime
+from sqlalchemy.dialects.postgresql import BIT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -125,8 +126,8 @@ class Seat(Base):
     seat_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('seat_seat_id_seq'::regclass)"))
     carriage_number = Column(Integer, nullable=False)
     seat_number = Column(String(10), nullable=False)
-    seat_type_id = Column(ForeignKey('seat_type.seat_type_id'), nullable=False)
-    occupied = Column(String(100), nullable=False, server_default=text("0"))
+    seat_type_id = Column(ForeignKey('seat_type.seat_type_id'), nullable=False, index=True)
+    occupied = Column(BIT(40), nullable=False, server_default=text("B'0000000000000000000000000000000000000000'::\"bit\""))
     train_id = Column(ForeignKey('train.train_id'), nullable=False)
 
     seat_type = relationship('SeatType')

@@ -2,7 +2,7 @@ import urllib.parse
 
 from flask import request, jsonify
 from flask_restful import Resource
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, BIGINT
 from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
@@ -114,11 +114,11 @@ class QueryApiV3(Resource):
                 .join(Train, Train.train_id == Interval.train_id) \
                 .filter(Train.train_id == train_id, Interval.prev_id == None) \
                 .first()[0]
-            seats_left = session.query(Seat.seat_type, func.count().label('left_cnt')) \
+            seats_left = session.query(Seat.seat_type_id, func.count().label('left_cnt')) \
                 .filter(Seat.train_id == train_id,
-                        func.substr(Seat.occupied, first_interval - first_id + 1,
-                                    last_interval - first_interval + 1) == '0' * (last_interval - first_interval + 1)) \
-                .group_by(Seat.seat_type) \
+                        func.cast(func.substring(Seat.occupied, first_interval - first_id + 1,
+                                                 last_interval - first_interval + 1), BIGINT) == 0) \
+                .group_by(Seat.seat_type_id) \
                 .all()
             train_info_list.append({
                 'train_name': train_name,
