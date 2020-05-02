@@ -2,11 +2,12 @@ import urllib.parse
 
 from flask import request, jsonify
 from flask_restful import Resource
-from sqlalchemy import or_
+from sqlalchemy import or_, func
+from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
 from model.Utils import get_nearby_station
-from model.models import Interval, Train, Station, District, City
+from model.models import *
 
 
 class QueryApi(Resource):
@@ -80,29 +81,47 @@ where i.train_id in
 
 class QueryApiV3(Resource):
     def get(self):
-        depart_place = '%' + urllib.parse.unquote(request.args.get('from')) + '%'
-        arrival_place = '%' + urllib.parse.unquote(request.args.get('to')) + '%'
+        dep_place = '%' + urllib.parse.unquote(request.args.get('from')) + '%'
+        arv_place = '%' + urllib.parse.unquote(request.args.get('to')) + '%'
+        DG_only = urllib.parse.unquote(request.args.get('DG_only'))
         session = DBSession()
         station_table = session.query(Station.station_name, Station.station_id,
                                       District.district_name, City.city_name) \
             .join(District, Station.district_id == District.district_id) \
             .join(City, District.city_id == City.city_id)
-        depart_train_id = session.query(Interval.train_id) \
-            .filter(Interval.dep_station.in_(station_table.filter(or_(Station.station_name.like(depart_place),
-                                                                      District.district_name.like(depart_place),
-                                                                      City.city_name.like(depart_place))
+        dep_train_id = session.query(Interval.train_id) \
+            .filter(Interval.dep_station.in_(station_table.filter(or_(Station.station_name.like(dep_place),
+                                                                      District.district_name.like(dep_place),
+                                                                      City.city_name.like(dep_place))
                                                                   )
                                              .with_entities(Station.station_id)))
-        arrival_train_id = session.query(Interval.train_id) \
-            .filter(Interval.arv_station.in_(station_table.filter(or_(Station.station_name.like(arrival_place),
-                                                                      District.district_name.like(arrival_place),
-                                                                      City.city_name.like(arrival_place))
+        arv_train_id = session.query(Interval.train_id) \
+            .filter(Interval.arv_station.in_(station_table.filter(or_(Station.station_name.like(arv_place),
+                                                                      District.district_name.like(arv_place),
+                                                                      City.city_name.like(arv_place))
                                                                   )
                                              .with_entities(Station.station_id)))
-        train_info = session.query(Interval.train_id, Train.train_name) \
+        raw_train_info = session.query(Interval.train_id, Train.train_name,
+                                       func.min(Interval.interval_id).label('first_interval'),
+                                       func.max(Interval.interval_id).label('last_interval')) \
             .join(Train, Train.train_id == Interval.train_id) \
-            .filter(Interval.train_id.in_(depart_train_id),
-                    Interval.train_id.in_(arrival_train_id)) \
-            .distinct()
-        train_info_list = [{'train_id': info.train_id, "train_name": info.train_name} for info in train_info]
+            .filter(Interval.train_id.in_(dep_train_id), Interval.train_id.in_(arv_train_id)) \
+            .group_by(Interval.train_id, Train.train_name) \
+            .all()
+        train_info_list = []
+        for train_id, train_name, first_interval, last_interval in raw_train_info:
+            first_id = session.query(Interval.interval_id) \
+                .join(Train, Train.train_id == Interval.train_id) \
+                .filter(Train.train_id == train_id, Interval.prev_id == None) \
+                .first()[0]
+            seats_left = session.query(Seat.seat_type, func.count().label('left_cnt')) \
+                .filter(Seat.train_id == train_id,
+                        func.substr(Seat.occupied, first_interval - first_id + 1,
+                                    last_interval - first_interval + 1) == '0' * (last_interval - first_interval + 1)) \
+                .group_by(Seat.seat_type) \
+                .all()
+            train_info_list.append({
+                'train_name': train_name,
+                'ticket_left': seats_left
+            })
         return jsonify(result=train_info_list, code=0)
