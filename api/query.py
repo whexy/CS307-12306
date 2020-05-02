@@ -3,7 +3,6 @@ import urllib.parse
 from flask import request, jsonify
 from flask_restful import Resource
 from sqlalchemy import or_, func, BIGINT
-from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
 from model.Utils import get_nearby_station
@@ -81,9 +80,9 @@ where i.train_id in
 
 class QueryApiV3(Resource):
     def get(self):
-        dep_place = '%' + urllib.parse.unquote(request.args.get('from')) + '%'
-        arv_place = '%' + urllib.parse.unquote(request.args.get('to')) + '%'
-        DG_only = urllib.parse.unquote(request.args.get('DG_only'))
+        dep_place = '%' + urllib.parse.unquote(request.args.get('from_city')) + '%'
+        arv_place = '%' + urllib.parse.unquote(request.args.get('to_city')) + '%'
+        dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
         session = DBSession()
         station_table = session.query(Station.station_name, Station.station_id,
                                       District.district_name, City.city_name) \
@@ -110,18 +109,41 @@ class QueryApiV3(Resource):
             .all()
         train_info_list = []
         for train_id, train_name, first_interval, last_interval in raw_train_info:
-            first_id = session.query(Interval.interval_id) \
-                .join(Train, Train.train_id == Interval.train_id) \
-                .filter(Train.train_id == train_id, Interval.prev_id == None) \
-                .first()[0]
-            seats_left = session.query(Seat.seat_type_id, func.count().label('left_cnt')) \
-                .filter(Seat.train_id == train_id,
-                        func.cast(func.substring(Seat.occupied, first_interval - first_id + 1,
-                                                 last_interval - first_interval + 1), BIGINT) == 0) \
-                .group_by(Seat.seat_type_id) \
-                .all()
+            if dg_only and not (train_name[0] in 'DG'):
+                continue
+            dep_station, dep_datetime = session.query(Interval.dep_station, Interval.dep_datetime) \
+                .filter(Interval.interval_id == first_interval) \
+                .first()
+            arv_station, arv_datetime = session.query(Interval.arv_station, Interval.arv_datetime) \
+                .filter(Interval.interval_id == last_interval) \
+                .first()
             train_info_list.append({
                 'train_name': train_name,
-                'ticket_left': seats_left
+                'first_interval': first_interval,
+                'last_interval': last_interval,
+                'dep_station': dep_station,
+                'arv_station': arv_station,
+                'dep_time': str(dep_datetime),
+                'arv_time': str(arv_datetime)
             })
         return jsonify(result=train_info_list, code=0)
+
+
+class TicketQuery(Resource):
+    def get(self):
+        train_name = urllib.parse.unquote(request.args.get('train_name'))
+        first_interval = int(urllib.parse.unquote(request.args.get('first_interval')))
+        last_interval = int(urllib.parse.unquote(request.args.get('last_interval')))
+        session = DBSession()
+        first_id = session.query(Interval.interval_id) \
+            .join(Train, Train.train_id == Interval.train_id) \
+            .filter(Train.train_name == train_name, Interval.prev_id == None) \
+            .first()[0]
+        seats_left = session.query(Seat.seat_type_id, func.count().label('left_cnt')) \
+            .join(Train, Train.train_id == Seat.train_id) \
+            .filter(Train.train_name == train_name,
+                    func.cast(func.substring(Seat.occupied, first_interval - first_id + 1,
+                                             last_interval - first_interval + 1), BIGINT) == 0) \
+            .group_by(Seat.seat_type_id) \
+            .all()
+        return jsonify(result=seats_left, code=0)
