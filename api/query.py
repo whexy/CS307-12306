@@ -3,6 +3,7 @@ import urllib.parse
 from flask import request, jsonify
 from flask_restful import Resource
 from sqlalchemy import or_, func, BIGINT
+from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
 from model.Utils import get_nearby_station
@@ -106,26 +107,25 @@ class QueryApiV3(Resource):
             .join(Train, Train.train_id == Interval.train_id) \
             .filter(Interval.train_id.in_(dep_train_id), Interval.train_id.in_(arv_train_id)) \
             .group_by(Interval.train_id, Train.train_name) \
+            .subquery()
+        dep_i = aliased(Interval, name='dep_i')
+        arv_i = aliased(Interval, name='arv_i')
+        dep_s = aliased(Station, name='dep_s')
+        arv_s = aliased(Station, name='arv_s')
+        train_info_list = session.query(raw_train_info.c.train_id, raw_train_info.c.train_name,
+                                        raw_train_info.c.first_interval, raw_train_info.c.last_interval,
+                                        dep_s.station_name, func.cast(dep_i.dep_datetime, String),
+                                        arv_s.station_name, func.cast(arv_i.arv_datetime, String)) \
+            .join(dep_i, dep_i.interval_id == raw_train_info.c.first_interval) \
+            .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
+            .join(dep_s, dep_s.station_id == dep_i.dep_station) \
+            .join(arv_s, arv_s.station_id == arv_i.arv_station) \
+            .order_by(dep_i.dep_datetime) \
             .all()
-        train_info_list = []
-        for train_id, train_name, first_interval, last_interval in raw_train_info:
-            if dg_only and not (train_name[0] in 'DG'):
-                continue
-            dep_station, dep_datetime = session.query(Interval.dep_station, Interval.dep_datetime) \
-                .filter(Interval.interval_id == first_interval) \
-                .first()
-            arv_station, arv_datetime = session.query(Interval.arv_station, Interval.arv_datetime) \
-                .filter(Interval.interval_id == last_interval) \
-                .first()
-            train_info_list.append({
-                'train_name': train_name,
-                'first_interval': first_interval,
-                'last_interval': last_interval,
-                'dep_station': dep_station,
-                'arv_station': arv_station,
-                'dep_time': str(dep_datetime),
-                'arv_time': str(arv_datetime)
-            })
+        train_info_list = list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
+                                      map(lambda x: dict(zip(
+                                          ['train_id', 'train_name', 'first_interval', 'last_interval', 'dep_station',
+                                           'dep_time', 'arv_station', 'arv_time'], x)), train_info_list)))
         return jsonify(result=train_info_list, code=0)
 
 
