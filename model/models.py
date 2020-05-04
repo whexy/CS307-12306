@@ -137,22 +137,18 @@ class Seat(Base):
 class Ticket(Base):
     __tablename__ = 'ticket'
     __table_args__ = (
-        Index('ticket_first_interval_last_interval_seat_id_available_uindex', 'first_interval', 'last_interval',
-              'seat_id', 'available', unique=True),
+        Index('ticket_first_interval_last_interval_seat_id_available_uindex', 'first_interval', 'last_interval', 'seat_id', 'available', unique=True),
     )
 
-    ticket_id = Column(Integer, primary_key=True, unique=True,
-                       server_default=text("nextval('ticket_ticket_id_seq'::regclass)"))
+    ticket_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('ticket_ticket_id_seq'::regclass)"))
     first_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     last_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     seat_id = Column(ForeignKey('seat.seat_id'), nullable=False)
-    user_id = Column(ForeignKey('users.user_id'), nullable=False)
     available = Column(Boolean, nullable=False)
 
     interval = relationship('Interval', primaryjoin='Ticket.first_interval == Interval.interval_id')
     interval1 = relationship('Interval', primaryjoin='Ticket.last_interval == Interval.interval_id')
     seat = relationship('Seat')
-    user = relationship('User')
 
 
 class Order(Base):
@@ -163,10 +159,12 @@ class Order(Base):
 
     order_id = Column(Integer, primary_key=True, server_default=text("nextval('orders_order_id_seq'::regclass)"))
     order_timestamp = Column(DateTime, nullable=False)
-    ticket_id = Column(ForeignKey('ticket.ticket_id'), nullable=False)
+    ticket_id = Column(ForeignKey('ticket.ticket_id'))
     order_status = Column(String(16), nullable=False)
+    user_id = Column(ForeignKey('users.user_id'), nullable=False)
 
     ticket = relationship('Ticket')
+    user = relationship('User')
 
 
 class SeatType(Base):
