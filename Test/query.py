@@ -42,7 +42,8 @@ def get():
         .join(Train, Train.train_id == Interval.train_id) \
         .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
         .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
-        .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
+        .filter(dep_train_info.c.dep_station != arv_train_info.c.arv_station,
+                or_(Interval.dep_station == dep_train_info.c.dep_station,
                     Interval.arv_station == arv_train_info.c.arv_station)) \
         .group_by(Interval.train_id, Train.train_name) \
         .subquery()
