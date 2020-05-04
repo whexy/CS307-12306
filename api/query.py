@@ -156,8 +156,10 @@ class TicketQuery(Resource):
                                              last_interval - first_interval + 1), BIGINT) == 0) \
             .group_by(Seat.seat_type_id, SeatType.name) \
             .subquery()
-        resp = session.query(seats_left.c.name, seats_left.c.left_cnt, price_list.c.price) \
+        resp = session.query(seats_left.c.seat_type_id, seats_left.c.name, seats_left.c.left_cnt, price_list.c.price) \
             .join(price_list, price_list.c.seat_type_id == seats_left.c.seat_type_id) \
             .all()
-        resp = list(map(lambda x: {'seat_type_name': x[0], 'left_cnt': x[1], 'price': x[2]}, resp))
+        resp = list(
+            sorted(map(lambda x: {'seat_type_id': x[0], 'seat_type_name': x[1], 'left_cnt': x[2], 'price': x[3]}, resp),
+                   key=lambda x: x['seat_type_id']))
         return jsonify(result=resp, code=0)
