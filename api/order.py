@@ -14,8 +14,8 @@ class OrderApi(Resource):
         user_id = get_jwt_identity()
         body = request.get_json()
         session = DBSession()
-        first_interval = body.get('first_interval')
-        last_interval = body.get('last_interval')
+        first_interval = int(body.get('first_interval'))
+        last_interval = int(body.get('last_interval'))
         seat_class = body.get('seat_class')
         train_name = body.get('train_name')
         first_id = session.query(Interval.interval_id) \
