@@ -81,31 +81,27 @@ where i.train_id in
 
 class QueryApiV3(Resource):
     def get(self):
-        dep_place = '%' + urllib.parse.unquote(request.args.get('from_city')) + '%'
-        arv_place = '%' + urllib.parse.unquote(request.args.get('to_city')) + '%'
+        dep_station = urllib.parse.unquote(request.args.get('dep_station'))
+        arv_station = urllib.parse.unquote(request.args.get('arv_station'))
         dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
         session = DBSession()
-        station_table = session.query(Station.station_name, Station.station_id,
-                                      District.district_name, City.city_name) \
-            .join(District, Station.district_id == District.district_id) \
-            .join(City, District.city_id == City.city_id)
-        dep_train_id = session.query(Interval.train_id) \
-            .filter(Interval.dep_station.in_(station_table.filter(or_(Station.station_name.like(dep_place),
-                                                                      District.district_name.like(dep_place),
-                                                                      City.city_name.like(dep_place))
-                                                                  )
-                                             .with_entities(Station.station_id)))
-        arv_train_id = session.query(Interval.train_id) \
-            .filter(Interval.arv_station.in_(station_table.filter(or_(Station.station_name.like(arv_place),
-                                                                      District.district_name.like(arv_place),
-                                                                      City.city_name.like(arv_place))
-                                                                  )
-                                             .with_entities(Station.station_id)))
+        dep_train_info = session.query(Interval.train_id, Interval.dep_station) \
+            .join(Station, Interval.dep_station == Station.station_id) \
+            .filter(Station.station_name == dep_station) \
+            .subquery()
+        arv_train_info = session.query(Interval.train_id, Interval.arv_station) \
+            .join(Station, Interval.arv_station == Station.station_id) \
+            .filter(Station.station_name == arv_station) \
+            .subquery()
         raw_train_info = session.query(Interval.train_id, Train.train_name,
                                        func.min(Interval.interval_id).label('first_interval'),
                                        func.max(Interval.interval_id).label('last_interval')) \
             .join(Train, Train.train_id == Interval.train_id) \
-            .filter(Interval.train_id.in_(dep_train_id), Interval.train_id.in_(arv_train_id)) \
+            .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
+            .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
+            .filter(dep_train_info.c.dep_station != arv_train_info.c.arv_station,
+                    Interval.dep_station == dep_train_info.c.dep_station,
+                    Interval.arv_station == arv_train_info.c.arv_station) \
             .group_by(Interval.train_id, Train.train_name) \
             .subquery()
         dep_i = aliased(Interval, name='dep_i')
