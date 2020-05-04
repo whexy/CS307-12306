@@ -1,4 +1,5 @@
 from api.locate import GeoApi, TrainApi, TrainApiV2
+from api.order import OrderApi
 from api.query import QueryApi, QueryApiV2, QueryApiV3, TicketQuery
 from api.ticket import TicketApi
 from api.user import UserInfoApi, SignupApi, UserCheckApi
@@ -16,3 +17,4 @@ def initialize_routes(api):
     api.add_resource(TrainApi, '/train')
     api.add_resource(TrainApiV2, '/train/v2')
     api.add_resource(TicketQuery, '/query/ticket')
+    api.add_resource(OrderApi, '/order')

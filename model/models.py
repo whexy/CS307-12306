@@ -158,7 +158,7 @@ class Order(Base):
     )
 
     order_id = Column(Integer, primary_key=True, server_default=text("nextval('orders_order_id_seq'::regclass)"))
-    order_timestamp = Column(DateTime, nullable=False)
+    order_timestamp = Column(DateTime, nullable=False, server_default=text("now()"))
     ticket_id = Column(ForeignKey('ticket.ticket_id'))
     order_status = Column(String(16), nullable=False)
     user_id = Column(ForeignKey('users.user_id'), nullable=False)

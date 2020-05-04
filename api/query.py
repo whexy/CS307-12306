@@ -144,6 +144,16 @@ class TicketQuery(Resource):
             session.query(i_alias.interval_id, i_alias.next_id)
                 .filter(i_alias.interval_id == st_alias.c.next_id)
         )
+        interval_list = session.query(successive_train_rec.c.interval_id).all()
+        index = 1
+        first_index, last_index = 0, 0
+        for interval in interval_list:
+            interval_id = interval[0]
+            if interval_id == first_interval:
+                first_index = index
+            elif interval_id == last_interval:
+                last_index = index
+            index += 1
         price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
             .join(successive_train_rec, Price.interval_id == successive_train_rec.c.interval_id) \
             .group_by(Price.seat_type_id) \
@@ -152,8 +162,7 @@ class TicketQuery(Resource):
             .join(SeatType, SeatType.seat_type_id == Seat.seat_type_id) \
             .join(Train, Train.train_id == Seat.train_id) \
             .filter(Train.train_name == train_name,
-                    func.cast(func.substring(Seat.occupied, first_interval - first_id + 1,
-                                             last_interval - first_interval + 1), BIGINT) == 0) \
+                    func.cast(func.substring(Seat.occupied, first_index, last_index - first_index + 1), BIGINT) == 0) \
             .group_by(Seat.seat_type_id, SeatType.name) \
             .subquery()
         resp = session.query(seats_left.c.seat_type_id, seats_left.c.name, seats_left.c.left_cnt, price_list.c.price) \
