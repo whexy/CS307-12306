@@ -31,18 +31,22 @@ class OrderApi(Resource):
             session.query(i_alias.interval_id, i_alias.next_id)
                 .filter(i_alias.interval_id == st_alias.c.next_id)
         )
-        interval_list = session.query(successive_train_rec.c.interval_id).all()
+        interval_list = session.query(successive_train_rec.c.interval_id) \
+            .order_by(successive_train_rec.c.interval_id) \
+            .all()
         index = 1
         first_index, last_index = 0, 0
         for interval in interval_list:
             interval_id = interval[0]
             if interval_id == first_interval:
                 first_index = index
-            elif interval_id == last_interval:
+            if interval_id == last_interval:
                 last_index = index
             index += 1
         seat = session.query(Seat) \
-            .filter(Seat.seat_type_id == seat_class,
+            .join(Train, Train.train_id == Seat.train_id) \
+            .filter(Train.train_name == train_name,
+                    Seat.seat_type_id == seat_class,
                     func.cast(func.substring(Seat.occupied, first_index, last_index - first_index + 1), BIGINT) == 0) \
             .first()
         if seat is None:

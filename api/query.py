@@ -144,14 +144,16 @@ class TicketQuery(Resource):
             session.query(i_alias.interval_id, i_alias.next_id)
                 .filter(i_alias.interval_id == st_alias.c.next_id)
         )
-        interval_list = session.query(successive_train_rec.c.interval_id).all()
+        interval_list = session.query(successive_train_rec.c.interval_id) \
+            .order_by(successive_train_rec.c.interval_id) \
+            .all()
         index = 1
         first_index, last_index = 0, 0
         for interval in interval_list:
             interval_id = interval[0]
             if interval_id == first_interval:
                 first_index = index
-            elif interval_id == last_interval:
+            if interval_id == last_interval:
                 last_index = index
             index += 1
         price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
