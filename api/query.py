@@ -135,6 +135,19 @@ class TicketQuery(Resource):
             .join(Train, Train.train_id == Interval.train_id) \
             .filter(Train.train_name == train_name, Interval.prev_id == None) \
             .first()[0]
+        successive_train = session.query(Interval.interval_id, Interval.next_id) \
+            .filter(Interval.interval_id == first_id) \
+            .cte(name='successive_train', recursive=True)
+        st_alias = aliased(successive_train, name='st')
+        i_alias = aliased(Interval, name='i')
+        successive_train_rec = successive_train.union_all(
+            session.query(i_alias.interval_id, i_alias.next_id)
+                .filter(i_alias.interval_id == st_alias.c.next_id)
+        )
+        price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
+            .join(successive_train_rec, Price.interval_id == successive_train_rec.c.interval_id) \
+            .group_by(Price.seat_type_id) \
+            .subquery()
         seats_left = session.query(Seat.seat_type_id, SeatType.name, func.count().label('left_cnt')) \
             .join(SeatType, SeatType.seat_type_id == Seat.seat_type_id) \
             .join(Train, Train.train_id == Seat.train_id) \
@@ -142,6 +155,9 @@ class TicketQuery(Resource):
                     func.cast(func.substring(Seat.occupied, first_interval - first_id + 1,
                                              last_interval - first_interval + 1), BIGINT) == 0) \
             .group_by(Seat.seat_type_id, SeatType.name) \
+            .subquery()
+        resp = session.query(seats_left.c.name, seats_left.c.left_cnt, price_list.c.price) \
+            .join(price_list, price_list.c.seat_type_id == seats_left.c.seat_type_id) \
             .all()
-        seats_left = list(map(lambda x: {'seat_type_name': x[1], 'left_cnt': x[2]}, seats_left))
-        return jsonify(result=seats_left, code=0)
+        resp = list(map(lambda x: {'seat_type_name': x[0], 'left_cnt': x[1], 'price': x[2]}, resp))
+        return jsonify(result=resp, code=0)
