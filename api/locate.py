@@ -1,4 +1,5 @@
 from flask import request, jsonify
+from flask_jwt_extended import jwt_required
 from flask_restful import Resource
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -8,6 +9,7 @@ from model.models import Province, District, City, Station, Train, Interval
 
 
 class GeoApi(Resource):
+    @jwt_required
     def get(self):
         geo_name = request.args.get('geo_name')
         session = DBSession()
@@ -29,6 +31,7 @@ class GeoApi(Resource):
 
 
 class TrainApi(Resource):
+    @jwt_required
     def get(self):
         train_name = request.args.get('train_name')
         session = DBSession()
@@ -69,6 +72,7 @@ class TrainApi(Resource):
 
 
 class TrainApiV2(Resource):
+    @jwt_required
     def get(self):
         train_name = request.args.get('train_name')
         session = DBSession()
