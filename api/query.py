@@ -99,9 +99,8 @@ class QueryApiV3(Resource):
             .join(Train, Train.train_id == Interval.train_id) \
             .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
             .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
-            .filter(dep_train_info.c.dep_station != arv_train_info.c.arv_station,
-                    Interval.dep_station == dep_train_info.c.dep_station,
-                    Interval.arv_station == arv_train_info.c.arv_station) \
+            .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
+                        Interval.arv_station == arv_train_info.c.arv_station)) \
             .group_by(Interval.train_id, Train.train_name) \
             .subquery()
         dep_i = aliased(Interval, name='dep_i')
@@ -116,6 +115,7 @@ class QueryApiV3(Resource):
             .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
             .join(dep_s, dep_s.station_id == dep_i.dep_station) \
             .join(arv_s, arv_s.station_id == arv_i.arv_station) \
+            .filter(dep_s.station_name == dep_station, arv_s.station_name == arv_station) \
             .order_by(dep_i.dep_datetime) \
             .all()
         train_info_list = list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
