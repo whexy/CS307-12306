@@ -6,7 +6,7 @@ from sqlalchemy import or_, func, BIGINT
 from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
-from model.Utils import get_nearby_station
+from model.Utils import get_nearby_station, get_interval_list
 from model.models import *
 
 
@@ -81,96 +81,86 @@ where i.train_id in
 
 class QueryApiV3(Resource):
     def get(self):
-        dep_station = urllib.parse.unquote(request.args.get('dep_station'))
-        arv_station = urllib.parse.unquote(request.args.get('arv_station'))
-        dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
         session = DBSession()
-        dep_train_info = session.query(Interval.train_id, Interval.dep_station) \
-            .join(Station, Interval.dep_station == Station.station_id) \
-            .filter(Station.station_name == dep_station) \
-            .subquery()
-        arv_train_info = session.query(Interval.train_id, Interval.arv_station) \
-            .join(Station, Interval.arv_station == Station.station_id) \
-            .filter(Station.station_name == arv_station) \
-            .subquery()
-        raw_train_info = session.query(Interval.train_id, Train.train_name,
-                                       func.min(Interval.interval_id).label('first_interval'),
-                                       func.max(Interval.interval_id).label('last_interval')) \
-            .join(Train, Train.train_id == Interval.train_id) \
-            .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
-            .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
-            .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
-                        Interval.arv_station == arv_train_info.c.arv_station)) \
-            .group_by(Interval.train_id, Train.train_name) \
-            .subquery()
-        dep_i = aliased(Interval, name='dep_i')
-        arv_i = aliased(Interval, name='arv_i')
-        dep_s = aliased(Station, name='dep_s')
-        arv_s = aliased(Station, name='arv_s')
-        train_info_list = session.query(raw_train_info.c.train_name,
-                                        raw_train_info.c.first_interval, raw_train_info.c.last_interval,
-                                        dep_s.station_name, func.cast(dep_i.dep_datetime, String),
-                                        arv_s.station_name, func.cast(arv_i.arv_datetime, String)) \
-            .join(dep_i, dep_i.interval_id == raw_train_info.c.first_interval) \
-            .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
-            .join(dep_s, dep_s.station_id == dep_i.dep_station) \
-            .join(arv_s, arv_s.station_id == arv_i.arv_station) \
-            .filter(dep_s.station_name == dep_station, arv_s.station_name == arv_station) \
-            .order_by(dep_i.dep_datetime) \
-            .all()
-        train_info_list = list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
-                                      map(lambda x: dict(zip(
-                                          ['train_name', 'first_interval', 'last_interval', 'dep_station',
-                                           'dep_time', 'arv_station', 'arv_time'], x)), train_info_list)))
-        return jsonify(result=train_info_list, code=0)
+        try:
+            dep_station = urllib.parse.unquote(request.args.get('dep_station'))
+            arv_station = urllib.parse.unquote(request.args.get('arv_station'))
+            dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
+            dep_train_info = session.query(Interval.train_id, Interval.dep_station) \
+                .join(Station, Interval.dep_station == Station.station_id) \
+                .filter(Station.station_name == dep_station) \
+                .subquery()
+            arv_train_info = session.query(Interval.train_id, Interval.arv_station) \
+                .join(Station, Interval.arv_station == Station.station_id) \
+                .filter(Station.station_name == arv_station) \
+                .subquery()
+            raw_train_info = session.query(Interval.train_id, Train.train_name,
+                                           func.min(Interval.interval_id).label('first_interval'),
+                                           func.max(Interval.interval_id).label('last_interval')) \
+                .join(Train, Train.train_id == Interval.train_id) \
+                .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
+                .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
+                .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
+                            Interval.arv_station == arv_train_info.c.arv_station)) \
+                .group_by(Interval.train_id, Train.train_name) \
+                .subquery()
+            dep_i = aliased(Interval, name='dep_i')
+            arv_i = aliased(Interval, name='arv_i')
+            dep_s = aliased(Station, name='dep_s')
+            arv_s = aliased(Station, name='arv_s')
+            train_info_list = session.query(raw_train_info.c.train_name,
+                                            raw_train_info.c.first_interval, raw_train_info.c.last_interval,
+                                            dep_s.station_name.label('dep_station'),
+                                            func.cast(dep_i.dep_datetime, String).label('dep_time'),
+                                            arv_s.station_name.label('arv_station'),
+                                            func.cast(arv_i.arv_datetime, String).label('arv_time')) \
+                .join(dep_i, dep_i.interval_id == raw_train_info.c.first_interval) \
+                .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
+                .join(dep_s, dep_s.station_id == dep_i.dep_station) \
+                .join(arv_s, arv_s.station_id == arv_i.arv_station) \
+                .filter(dep_s.station_name == dep_station, arv_s.station_name == arv_station) \
+                .order_by(dep_i.dep_datetime) \
+                .all()
+            train_info_list = list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
+                                          map(lambda x: dict(zip(x.keys(), x)), train_info_list)))
+            return jsonify(result=train_info_list, code=0)
+        finally:
+            session.close()
 
 
 class TicketQuery(Resource):
     def get(self):
-        train_name = urllib.parse.unquote(request.args.get('train_name'))
-        first_interval = int(urllib.parse.unquote(request.args.get('first_interval')))
-        last_interval = int(urllib.parse.unquote(request.args.get('last_interval')))
         session = DBSession()
-        first_id = session.query(Interval.interval_id) \
-            .join(Train, Train.train_id == Interval.train_id) \
-            .filter(Train.train_name == train_name, Interval.prev_id == None) \
-            .first()[0]
-        successive_train = session.query(Interval.interval_id, Interval.next_id) \
-            .filter(Interval.interval_id == first_id) \
-            .cte(name='successive_train', recursive=True)
-        st_alias = aliased(successive_train, name='st')
-        i_alias = aliased(Interval, name='i')
-        successive_train_rec = successive_train.union_all(
-            session.query(i_alias.interval_id, i_alias.next_id)
-                .filter(i_alias.interval_id == st_alias.c.next_id)
-        )
-        interval_list = session.query(successive_train_rec.c.interval_id) \
-            .order_by(successive_train_rec.c.interval_id) \
-            .all()
-        index = 1
-        first_index, last_index = 0, 0
-        for interval in interval_list:
-            interval_id = interval[0]
-            if interval_id == first_interval:
-                first_index = index
-            if interval_id == last_interval:
-                last_index = index
-            index += 1
-        price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
-            .join(successive_train_rec, Price.interval_id == successive_train_rec.c.interval_id) \
-            .group_by(Price.seat_type_id) \
-            .subquery()
-        seats_left = session.query(Seat.seat_type_id, SeatType.name, func.count().label('left_cnt')) \
-            .join(SeatType, SeatType.seat_type_id == Seat.seat_type_id) \
-            .join(Train, Train.train_id == Seat.train_id) \
-            .filter(Train.train_name == train_name,
-                    func.cast(func.substring(Seat.occupied, first_index, last_index - first_index + 1), BIGINT) == 0) \
-            .group_by(Seat.seat_type_id, SeatType.name) \
-            .subquery()
-        resp = session.query(seats_left.c.seat_type_id, seats_left.c.name, seats_left.c.left_cnt, price_list.c.price) \
-            .join(price_list, price_list.c.seat_type_id == seats_left.c.seat_type_id) \
-            .all()
-        resp = list(
-            sorted(map(lambda x: {'seat_type_id': x[0], 'seat_type_name': x[1], 'left_cnt': x[2], 'price': x[3]}, resp),
-                   key=lambda x: x['seat_type_id']))
-        return jsonify(result=resp, code=0)
+        try:
+            train_name = urllib.parse.unquote(request.args.get('train_name'))
+            first_interval = int(urllib.parse.unquote(request.args.get('first_interval')))
+            last_interval = int(urllib.parse.unquote(request.args.get('last_interval')))
+            interval_list = get_interval_list(train_name, session)
+            first_index = session.query(interval_list.c.interval_no) \
+                .filter(interval_list.c.interval_id == first_interval) \
+                .first() \
+                .interval_no
+            last_index = session.query(interval_list.c.interval_no) \
+                .filter(interval_list.c.interval_id == last_interval) \
+                .first() \
+                .interval_no
+            price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
+                .join(interval_list, Price.interval_id == interval_list.c.interval_id) \
+                .group_by(Price.seat_type_id) \
+                .subquery()
+            seats_left = session.query(Seat.seat_type_id, SeatType.name, func.count().label('left_cnt')) \
+                .join(SeatType, SeatType.seat_type_id == Seat.seat_type_id) \
+                .join(Train, Train.train_id == Seat.train_id) \
+                .filter(Train.train_name == train_name,
+                        func.cast(func.substring(Seat.occupied, first_index, last_index - first_index + 1),
+                                  BIGINT) == 0) \
+                .group_by(Seat.seat_type_id, SeatType.name) \
+                .subquery()
+            resp = session.query(seats_left.c.seat_type_id, seats_left.c.name.label('seat_type_name'),
+                                 seats_left.c.left_cnt, price_list.c.price) \
+                .join(price_list, price_list.c.seat_type_id == seats_left.c.seat_type_id) \
+                .all()
+            resp = list(sorted(map(lambda x: dict(zip(x.keys(), x)), resp), key=lambda x: x['seat_type_id']))
+            return jsonify(result=resp, code=0)
+        finally:
+            session.close()
