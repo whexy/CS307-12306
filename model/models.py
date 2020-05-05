@@ -1,6 +1,6 @@
 from flask_bcrypt import generate_password_hash, check_password_hash
 from sqlalchemy import Column, ForeignKey, Integer, String, Time, UniqueConstraint, text, Float, Index, Boolean, \
-    DateTime
+    DateTime, CHAR
 from sqlalchemy.dialects.postgresql import BIT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -34,6 +34,7 @@ class User(Base):
     real_name = Column(String(45), nullable=False)
     email = Column(String(45), nullable=False)
     password = Column(String(100), nullable=False)
+    id_card = Column(CHAR(18))
 
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
@@ -162,6 +163,7 @@ class Order(Base):
     ticket_id = Column(ForeignKey('ticket.ticket_id'))
     order_status = Column(String(16), nullable=False)
     user_id = Column(ForeignKey('users.user_id'), nullable=False)
+    price = Column(Float(53))
 
     ticket = relationship('Ticket')
     user = relationship('User')

@@ -146,6 +146,7 @@ class TicketQuery(Resource):
                 .interval_no
             price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
                 .join(interval_list, Price.interval_id == interval_list.c.interval_id) \
+                .filter(interval_list.c.interval_no <= last_index, interval_list.c.interval_no >= first_index)  \
                 .group_by(Price.seat_type_id) \
                 .subquery()
             seats_left = session.query(Seat.seat_type_id, SeatType.name, func.count().label('left_cnt')) \

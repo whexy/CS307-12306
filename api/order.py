@@ -19,10 +19,11 @@ class OrderApi(Resource):
             last_interval = int(body.get('last_interval'))
             seat_class = body.get('seat_class')
             train_name = body.get('train_name')
-            successive_train_rec = get_interval_list(train_name, session)
-            interval_list = session.query(successive_train_rec.c.interval_id) \
-                .order_by(successive_train_rec.c.interval_id) \
-                .all()
+            # successive_train_rec = get_interval_list(train_name, session)
+            interval_list = get_interval_list(train_name, session)
+            # interval_list = session.query(successive_train_rec.c.interval_id) \
+            #     .order_by(successive_train_rec.c.interval_id) \
+            #     .all()
             first_index = session.query(interval_list.c.interval_no) \
                 .filter(interval_list.c.interval_id == first_interval) \
                 .first() \
@@ -47,7 +48,12 @@ class OrderApi(Resource):
             session.add(new_ticket)
             session.commit()
             session.flush()
-            new_order = Order(order_status='unpaid', user_id=user_id, ticket_id=new_ticket.ticket_id)
+            price = session.query(func.sum(Price.price).label('price')) \
+                .join(interval_list, Price.interval_id == interval_list.c.interval_id) \
+                .filter(Price.seat_type_id == seat_class, interval_list.c.interval_no <= last_index,
+                        interval_list.c.interval_no >= first_index) \
+                .first()
+            new_order = Order(order_status='unpaid', user_id=user_id, ticket_id=new_ticket.ticket_id, price=price)
             session.add(new_order)
             session.commit()
             session.flush()
