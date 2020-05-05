@@ -71,7 +71,8 @@ class OrderApi(Resource):
             # The delete function is to set the order status "cancelled", set ticket available false,
             # and released the occupied seat.
             current_order: Order = session.query(Order).filter(Order.order_id == order_id).first()
-            if user_id != current_order.user_id:
+            # print(current_order.user_id, user_id)
+            if int(user_id) != int(current_order.user_id):
                 return jsonify(code=100, error='非法退票操作！')
             current_order.order_status = "cancelled"
             session.commit()
@@ -88,10 +89,11 @@ class OrderApi(Resource):
 
             # Here to release the seat
             train_name = session.query(Train.train_name).filter(Train.train_id == train_id).first().train_name
-            successive_train_rec = get_interval_list(train_name, session)
-            interval_list = session.query(successive_train_rec.c.interval_id) \
-                .order_by(successive_train_rec.c.interval_id) \
-                .all()
+            interval_list = get_interval_list(train_name, session)
+            # successive_train_rec = get_interval_list(train_name, session)
+            # interval_list = session.query(successive_train_rec.c.interval_id) \
+            #     .order_by(successive_train_rec.c.interval_id) \
+            #     .all()
             first_index = session.query(interval_list.c.interval_no) \
                 .filter(interval_list.c.interval_id == first_interval) \
                 .first() \
@@ -105,6 +107,6 @@ class OrderApi(Resource):
                                     2:].zfill(40)
             session.commit()
             session.flush()
-            return jsonify(code=1, result="操作成功，票已失效")
+            return jsonify(code=0, result="操作成功，票已失效")
         finally:
             session.close()
