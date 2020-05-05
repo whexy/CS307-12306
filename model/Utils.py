@@ -1,4 +1,4 @@
-from sqlalchemy import or_, literal
+from sqlalchemy import or_, literal, func
 from sqlalchemy.orm import aliased
 
 from model.models import *
@@ -30,3 +30,43 @@ def get_interval_list(train_name, session):
             .filter(i_alias.interval_id == cte_alias.c.next_id)
     )
     return cte
+
+
+def fuzzy_query(dep_place, arv_place, dg_only, session):
+    dep_train_info = session.query(Interval.train_id, Interval.dep_station) \
+        .join(Station, Interval.dep_station == Station.station_id) \
+        .filter(Station.station_name.like(dep_place)) \
+        .subquery()
+    arv_train_info = session.query(Interval.train_id, Interval.arv_station) \
+        .join(Station, Interval.arv_station == Station.station_id) \
+        .filter(Station.station_name.like(arv_place)) \
+        .subquery()
+    raw_train_info = session.query(Interval.train_id, Train.train_name,
+                                   func.min(Interval.interval_id).label('first_interval'),
+                                   func.max(Interval.interval_id).label('last_interval')) \
+        .join(Train, Train.train_id == Interval.train_id) \
+        .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
+        .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
+        .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
+                    Interval.arv_station == arv_train_info.c.arv_station)) \
+        .group_by(Interval.train_id, Train.train_name) \
+        .subquery()
+    dep_i = aliased(Interval, name='dep_i')
+    arv_i = aliased(Interval, name='arv_i')
+    dep_s = aliased(Station, name='dep_s')
+    arv_s = aliased(Station, name='arv_s')
+    train_info_list = session.query(raw_train_info.c.train_name,
+                                    raw_train_info.c.first_interval, raw_train_info.c.last_interval,
+                                    dep_s.station_name.label('dep_station'),
+                                    func.cast(dep_i.dep_datetime, String).label('dep_time'),
+                                    arv_s.station_name.label('arv_station'),
+                                    func.cast(arv_i.arv_datetime, String).label('arv_time')) \
+        .join(dep_i, dep_i.interval_id == raw_train_info.c.first_interval) \
+        .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
+        .join(dep_s, dep_s.station_id == dep_i.dep_station) \
+        .join(arv_s, arv_s.station_id == arv_i.arv_station) \
+        .filter(dep_s.station_name.like(dep_place), arv_s.station_name.like(arv_place)) \
+        .order_by(dep_i.dep_datetime) \
+        .all()
+    return list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
+                       map(lambda x: dict(zip(x.keys(), x)), train_info_list)))

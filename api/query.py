@@ -6,7 +6,7 @@ from sqlalchemy import or_, func, BIGINT
 from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
-from model.Utils import get_nearby_station, get_interval_list
+from model.Utils import get_nearby_station, get_interval_list, fuzzy_query
 from model.models import *
 
 
@@ -135,44 +135,35 @@ class QueryApiV4(Resource):
             dep_place = '%' + urllib.parse.unquote(request.args.get('dep_station')) + '%'
             arv_place = '%' + urllib.parse.unquote(request.args.get('arv_station')) + '%'
             dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
-            dep_train_info = session.query(Interval.train_id, Interval.dep_station) \
-                .join(Station, Interval.dep_station == Station.station_id) \
-                .filter(Station.station_name.like(dep_place)) \
-                .subquery()
-            arv_train_info = session.query(Interval.train_id, Interval.arv_station) \
-                .join(Station, Interval.arv_station == Station.station_id) \
-                .filter(Station.station_name.like(arv_place)) \
-                .subquery()
-            raw_train_info = session.query(Interval.train_id, Train.train_name,
-                                           func.min(Interval.interval_id).label('first_interval'),
-                                           func.max(Interval.interval_id).label('last_interval')) \
-                .join(Train, Train.train_id == Interval.train_id) \
-                .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
-                .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
-                .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
-                            Interval.arv_station == arv_train_info.c.arv_station)) \
-                .group_by(Interval.train_id, Train.train_name) \
-                .subquery()
-            dep_i = aliased(Interval, name='dep_i')
-            arv_i = aliased(Interval, name='arv_i')
-            dep_s = aliased(Station, name='dep_s')
-            arv_s = aliased(Station, name='arv_s')
-            train_info_list = session.query(raw_train_info.c.train_name,
-                                            raw_train_info.c.first_interval, raw_train_info.c.last_interval,
-                                            dep_s.station_name.label('dep_station'),
-                                            func.cast(dep_i.dep_datetime, String).label('dep_time'),
-                                            arv_s.station_name.label('arv_station'),
-                                            func.cast(arv_i.arv_datetime, String).label('arv_time')) \
-                .join(dep_i, dep_i.interval_id == raw_train_info.c.first_interval) \
-                .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
-                .join(dep_s, dep_s.station_id == dep_i.dep_station) \
-                .join(arv_s, arv_s.station_id == arv_i.arv_station) \
-                .filter(dep_s.station_name.like(dep_place), arv_s.station_name.like(arv_place)) \
-                .order_by(dep_i.dep_datetime) \
-                .all()
-            train_info_list = list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
-                                          map(lambda x: dict(zip(x.keys(), x)), train_info_list)))
-            return dict(result=train_info_list, code=0)
+            train_info_list = fuzzy_query(dep_place, arv_place, dg_only, session)
+            return jsonify(result=train_info_list, code=0)
+        finally:
+            session.close()
+
+
+class QueryTransfer(Resource):
+    transfer_list = ('广州南', '杭州东', '上海虹桥', '郑州东', '长沙南', '南京南', '深圳北', '西安北', '济南西', '石家庄',
+                     '合肥南', '武汉', '苏州', '徐州东', '无锡', '昆山南', '南昌西', '常州', '嘉兴南', '厦门北', '衡阳东',
+                     '义乌', '温州南', '宁波', '成都东')
+
+    def get(self):
+        session = DBSession()
+        try:
+            dep_place = '%' + urllib.parse.unquote(request.args.get('dep_station')) + '%'
+            arv_place = '%' + urllib.parse.unquote(request.args.get('arv_station')) + '%'
+            dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
+            resp = []
+            for transfer_station in QueryTransfer.transfer_list:
+                first_list = fuzzy_query(dep_place, transfer_station, dg_only, session)
+                if first_list:
+                    second_list = fuzzy_query(transfer_station, arv_place, dg_only, session)
+                    if second_list:
+                        transfer_id = session.query(Station.station_id) \
+                            .filter(Station.station_name == transfer_station) \
+                            .first() \
+                            .station_id
+                        resp.append(dict(stationName=transfer_station, stationId=transfer_id))
+            return jsonify(result=resp, code=0)
         finally:
             session.close()
 
@@ -195,7 +186,7 @@ class TicketQuery(Resource):
                 .interval_no
             price_list = session.query(Price.seat_type_id, func.sum(Price.price).label('price')) \
                 .join(interval_list, Price.interval_id == interval_list.c.interval_id) \
-                .filter(interval_list.c.interval_no <= last_index, interval_list.c.interval_no >= first_index)  \
+                .filter(interval_list.c.interval_no <= last_index, interval_list.c.interval_no >= first_index) \
                 .group_by(Price.seat_type_id) \
                 .subquery()
             seats_left = session.query(Seat.seat_type_id, SeatType.name, func.count().label('left_cnt')) \
