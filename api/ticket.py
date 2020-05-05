@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restful import Resource
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.orm import aliased
 from pypinyin import lazy_pinyin, Style
 
@@ -27,7 +27,8 @@ class TicketApi(Resource):
                                              User.real_name.label('name'),
                                              User.id_card.label('idCard'),
                                              Train.train_name.label('trainName'),
-                                             Seat.carriage_number.concat('车').concat(Seat.seat_number).label('seat'),
+                                             Seat.carriage_number.label('carriageNumber'),
+                                             Seat.seat_number.label('seatNumber'),
                                              SeatType.name.label('seatClass'),
                                              dep_s.station_name.label('departStation'),
                                              arv_s.station_name.label('arrivalStation'),
@@ -42,16 +43,22 @@ class TicketApi(Resource):
                                .join(dep_s, dep_s.station_id == dep_i.dep_station)
                                .join(arv_s, arv_s.station_id == arv_i.arv_station)
                                .filter(Order.user_id == user_id)
-                               .order_by(Order.order_timestamp)
+                               .order_by(desc(Order.order_timestamp))
                                .all()))
             for t in tickets:
                 t['departStationEnglish'] = ''.join(map(lambda x: x[0].upper() + x[1:],
                                                         lazy_pinyin(t['departStation'], style=Style.NORMAL)))
                 t['arrivalStationEnglish'] = ''.join(map(lambda x: x[0].upper() + x[1:],
                                                          lazy_pinyin(t['arrivalStation'], style=Style.NORMAL)))
+                t['realOrderId'] = t['orderId']
                 t['orderId'] = str(t['orderId']).zfill(21)
                 t['ticketId'] = 'Z' + str(t['ticketId']).zfill(9)
                 t['price'] = '￥{:.2f} 南方铁路售'.format(t['price'])
+                t['checkEnter'] = "9¾"
+                if t['seatNumber'].endswith('铺'):
+                    t['seat'] = '{:02d}车{}'.format(t['carriageNumber'], t['seatNumber'][:-2].zfill(3))
+                else:
+                    t['seat'] = '{:02d}车{}座'.format(t['carriageNumber'], t['seatNumber'].zfill(3))
             # # 现在这个API是假的
             # ticket = [{
             #     "trainName": 'G456', [x]
