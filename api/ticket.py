@@ -1,27 +1,74 @@
 from flask import jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restful import Resource
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
+from pypinyin import lazy_pinyin, Style
+
+from model.Database import DBSession
+from model.models import *
 
 
 class TicketApi(Resource):
     @jwt_required
     def get(self):
-        user_id = get_jwt_identity()
-        # 现在这个API是假的
-        ticket = [{
-            "trainName": 'G456',
-            "checkEnter": 'A12',
-            "seat": '01车01F座',
-            "seatClass": '二等座',
-            "departStation": '镇江',
-            "departStationEnglish": 'Zhenjiang',
-            "arrivalStation": '南京',
-            "arrivalStationEnglish": 'Nanjing',
-            "price": '￥29.5 南方铁路售',
-            "time": '2020年4月18日 07:14',
-            "name": '石文轩',
-            "idCard": '3211011999****6317',
-            "orderId": '123456789098765432101',
-            "ticketId": 'Z123456789'
-        }] * 4
-        return jsonify(code=0, ticket=ticket)
+        session = DBSession()
+        try:
+            user_id = get_jwt_identity()
+            dep_i = aliased(Interval, name='dep_i')
+            arv_i = aliased(Interval, name='arv_i')
+            dep_s = aliased(Station, name='dep_s')
+            arv_s = aliased(Station, name='arv_s')
+            tickets = list(map(lambda x: dict(zip(x.keys(), x)),
+                               session.query(Order.order_id.label('orderId'),
+                                             Order.price,
+                                             Order.order_status.label('orderStatus'),
+                                             Ticket.ticket_id.label('ticketId'),
+                                             User.real_name.label('name'),
+                                             User.id_card.label('idCard'),
+                                             Train.train_name.label('trainName'),
+                                             Seat.carriage_number.concat('车').concat(Seat.seat_number).label('seat'),
+                                             SeatType.name.label('seatClass'),
+                                             dep_s.station_name.label('departStation'),
+                                             arv_s.station_name.label('arrivalStation'),
+                                             func.cast(dep_i.dep_datetime, String).label('time'))
+                               .join(Ticket, Ticket.ticket_id == Order.ticket_id)
+                               .join(User, User.user_id == Order.user_id)
+                               .join(Seat, Seat.seat_id == Ticket.seat_id)
+                               .join(SeatType, SeatType.seat_type_id == Seat.seat_type_id)
+                               .join(dep_i, dep_i.interval_id == Ticket.first_interval)
+                               .join(arv_i, arv_i.interval_id == Ticket.last_interval)
+                               .join(Train, Train.train_id == dep_i.train_id)
+                               .join(dep_s, dep_s.station_id == dep_i.dep_station)
+                               .join(arv_s, arv_s.station_id == arv_i.arv_station)
+                               .filter(Order.user_id == user_id)
+                               .order_by(Order.order_timestamp)
+                               .all()))
+            for t in tickets:
+                t['departStationEnglish'] = ''.join(map(lambda x: x[0].upper() + x[1:],
+                                                        lazy_pinyin(t['departStation'], style=Style.NORMAL)))
+                t['arrivalStationEnglish'] = ''.join(map(lambda x: x[0].upper() + x[1:],
+                                                         lazy_pinyin(t['arrivalStation'], style=Style.NORMAL)))
+                t['orderId'] = str(t['orderId']).zfill(21)
+                t['ticketId'] = 'Z' + str(t['ticketId']).zfill(9)
+                t['price'] = '￥{:.2f} 南方铁路售'.format(t['price'])
+            # # 现在这个API是假的
+            # ticket = [{
+            #     "trainName": 'G456', [x]
+            #     "checkEnter": 'A12', [ ] # 不要了
+            #     "seat": '01车01F座', [x]
+            #     "seatClass": '二等座', [x]
+            #     "departStation": '镇江', [x]
+            #     "departStationEnglish": 'Zhenjiang', [x]
+            #     "arrivalStation": '南京', [x]
+            #     "arrivalStationEnglish": 'Nanjing', [x]
+            #     "price": '￥29.5 南方铁路售', [x]
+            #     "time": '2020年4月18日 07:14', [x]
+            #     "name": '石文轩', [x]
+            #     "idCard": '3211011999****6317', [x]
+            #     "orderId": '123456789098765432101', [x]
+            #     "ticketId": 'Z123456789' [x]
+            # }] * 4
+            return jsonify(code=0, ticket=tickets)
+        finally:
+            session.close()
