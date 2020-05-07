@@ -51,7 +51,7 @@ class UserInfoApi(Resource):
             user = session.query(User).filter(User.user_id == user_id).first()
             if user is None:
                 return jsonify(error='User not found', code=404)
-            return jsonify(**user.to_dict(), code=0)
+            return jsonify(result=user.to_dict(), code=0)
         finally:
             session.close()
 

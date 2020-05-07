@@ -22,6 +22,7 @@ class Train(Base):
 
     train_id = Column(Integer, primary_key=True, server_default=text("nextval('train_train_id_seq'::regclass)"))
     train_name = Column(String(15), nullable=False)
+    available = Column(Boolean, nullable=False, server_default=text("true"))
 
 
 class User(Base):
@@ -48,6 +49,7 @@ class User(Base):
             'phone_number': self.phone_number,
             'real_name': self.real_name,
             'email': self.email,
+            'id_card': self.id_card,
         }
 
 
@@ -78,6 +80,7 @@ class Station(Base):
     station_id = Column(Integer, primary_key=True, server_default=text("nextval('station_station_id_seq'::regclass)"))
     station_name = Column(String(32), nullable=False, unique=True)
     district_id = Column(ForeignKey('district.district_id'), nullable=False)
+    available = Column(Boolean, nullable=False, server_default=text("true"))
 
     district = relationship('District')
 
@@ -97,6 +100,7 @@ class Interval(Base):
     arv_datetime = Column(Time, nullable=False)
     prev_id = Column(Integer)
     next_id = Column(Integer)
+    available = Column(Boolean, nullable=False, server_default=text("true"))
 
     station = relationship('Station', primaryjoin='Interval.arv_station == Station.station_id')
     station1 = relationship('Station', primaryjoin='Interval.dep_station == Station.station_id')
