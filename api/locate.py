@@ -105,3 +105,27 @@ class TrainApiV2(Resource):
             return jsonify(result=resp, code=0)
         finally:
             session.close()
+
+
+class AreaApi(Resource):
+    def get(self):
+        # return the list of provinces
+        session = DBSession()
+        try:
+            province_name = request.args.get('province')
+            city_name = request.args.get('city')
+            if not province_name:
+                province_list = session.query(Province.province_name).all()
+                return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), province_list)))
+            elif not city_name:
+                city_list = session.query(City.city_name).join(Province, Province.province_id == City.province_id) \
+                    .filter(Province.province_name == province_name).all()
+                return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), city_list)))
+            else:
+                district_list = session.query(District.district_name) \
+                    .join(City, City.city_id == District.city_id) \
+                    .join(Province, Province.province_id == City.province_id) \
+                    .filter(Province.province_name == province_name, City.city_name == city_name).all()
+                return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), district_list)))
+        finally:
+            session.close()
