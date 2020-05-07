@@ -1,10 +1,9 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource
-from sqlalchemy import or_, func, String, literal
+from sqlalchemy import or_
 
 from model.Database import DBSession
-from model.Utils import get_interval_list
 from model.models import Province, District, City, Station, Train, Interval
 
 
@@ -19,7 +18,7 @@ class AdminStationApi(Resource):
             city_name = body.get('city_name')
             district_name = body.get('district_name')
             station_name = body.get('station_name')
-            if session.query(Station).filter(Station.station_name == station_name).first():
+            if session.query(Station).filter(Station.station_name == station_name, Station.available == True).first():
                 return jsonify(code=1, error="站名已存在！")
             province = session.query(Province).filter(Province.province_name == province_name).first()
             if province is None:
@@ -54,7 +53,8 @@ class AdminStationApi(Resource):
             city_name = body.get('city_name')
             district_name = body.get('district_name')
             station_name = body.get('station_name')
-            current_station: Station = session.query(Station).filter(Station.station_name == station_name).first()
+            current_station: Station = session.query(Station).filter(Station.station_name == station_name,
+                                                                     Station.available == True).first()
             if current_station is None:
                 return jsonify(code=1, error="站点不存在")
 
@@ -78,7 +78,8 @@ class AdminStationApi(Resource):
             body = request.get_json()
             station_name = body.get('station_name')
             # Find if the station exists
-            station: Station = session.query(Station).filter(Station.station_name == station_name).first()
+            station: Station = session.query(Station).filter(Station.station_name == station_name,
+                                                             Station.available == True).first()
             if not station:
                 return jsonify(code=1, error="站点不存在")
             # Check if the station has train passing

@@ -85,10 +85,11 @@ class OrderApi(Resource):
             last_interval = current_ticket.last_interval
             current_seat: Seat = session.query(Seat).filter(Seat.seat_id == current_ticket.seat_id).first()
             train_id = session.query(Train.train_id).join(Interval, Interval.train_id == Train.train_id).filter(
-                Interval.interval_id == first_interval).first()
+                Interval.interval_id == first_interval, Interval.available == True, Train.available == True).first()
 
             # Here to release the seat
-            train_name = session.query(Train.train_name).filter(Train.train_id == train_id).first().train_name
+            train_name = session.query(Train.train_name).filter(Train.train_id == train_id,
+                                                                Train.available == True).first().train_name
             interval_list = get_interval_list(train_name, session)
             # successive_train_rec = get_interval_list(train_name, session)
             # interval_list = session.query(successive_train_rec.c.interval_id) \

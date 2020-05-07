@@ -87,7 +87,7 @@ class TrainApiV2(Resource):
                 .join(Station, Station.station_id == successive_train_rec.c.dep_station) \
                 .join(District, Station.district_id == District.district_id) \
                 .join(City, District.city_id == City.city_id) \
-                .order_by(successive_train_rec.c.interval_id) \
+                .order_by(successive_train_rec.c.interval_id, Station.available == True) \
                 .all()
 
             last_no = interval_list[-1].id
@@ -99,9 +99,10 @@ class TrainApiV2(Resource):
                 .join(Station, Station.station_id == successive_train_rec.c.arv_station) \
                 .join(District, Station.district_id == District.district_id) \
                 .join(City, District.city_id == City.city_id) \
-                .filter(successive_train_rec.c.interval_no == last_no) \
+                .filter(successive_train_rec.c.interval_no == last_no, Station.available == True) \
                 .first()
-            resp.append(dict(zip(last_station.keys(), last_station)))
+            if last_station:
+                resp.append(dict(zip(last_station.keys(), last_station)))
             return jsonify(result=resp, code=0)
         finally:
             session.close()

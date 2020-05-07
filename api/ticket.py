@@ -42,7 +42,12 @@ class TicketApi(Resource):
                                .join(Train, Train.train_id == dep_i.train_id)
                                .join(dep_s, dep_s.station_id == dep_i.dep_station)
                                .join(arv_s, arv_s.station_id == arv_i.arv_station)
-                               .filter(Order.user_id == user_id)
+                               .filter(Order.user_id == user_id,
+                                       Train.available == True,
+                                       dep_s.available == True,
+                                       arv_s.available == True,
+                                       dep_i.available == True,
+                                       arv_i.available == True)
                                .order_by(desc(Order.order_timestamp))
                                .all()))
             for t in tickets:

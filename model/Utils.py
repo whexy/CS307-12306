@@ -11,23 +11,24 @@ def get_nearby_station(place, session):
         .join(Province, Province.province_id == City.province_id) \
         .filter(or_(District.district_name.like("%" + place + "%"),
                     City.city_name.like("%" + place + "%"),
-                    Province.province_name.like("%" + place + "%")))
+                    Province.province_name.like("%" + place + "%")),
+                Station.available == True)
 
 
 def get_interval_list(train_name, session):
     first_id = session.query(Interval.interval_id) \
         .join(Train, Train.train_id == Interval.train_id) \
-        .filter(Train.train_name == train_name, Interval.prev_id == None) \
+        .filter(Train.train_name == train_name, Interval.prev_id == None, Interval.available == True) \
         .first() \
         .interval_id
     cte = session.query(Interval, literal(1).label('interval_no')) \
-        .filter(Interval.interval_id == first_id) \
+        .filter(Interval.interval_id == first_id, Interval.available == True) \
         .cte(name='cte', recursive=True)
     cte_alias = aliased(cte, name='c')
     i_alias = aliased(Interval, name='i')
     cte = cte.union_all(
         session.query(i_alias, cte_alias.c.interval_no + 1)
-            .filter(i_alias.interval_id == cte_alias.c.next_id)
+            .filter(i_alias.interval_id == cte_alias.c.next_id, i_alias.available == True)
     )
     return cte
 
@@ -35,11 +36,15 @@ def get_interval_list(train_name, session):
 def fuzzy_query(dep_place, arv_place, dg_only, session):
     dep_train_info = session.query(Interval.train_id, Interval.dep_station) \
         .join(Station, Interval.dep_station == Station.station_id) \
-        .filter(Station.station_name.like(dep_place)) \
+        .filter(Station.station_name.like(dep_place),
+                Station.available == True,
+                Interval.available == True) \
         .subquery()
     arv_train_info = session.query(Interval.train_id, Interval.arv_station) \
         .join(Station, Interval.arv_station == Station.station_id) \
-        .filter(Station.station_name.like(arv_place)) \
+        .filter(Station.station_name.like(arv_place),
+                Station.available == True,
+                Interval.available == True) \
         .subquery()
     raw_train_info = session.query(Interval.train_id, Train.train_name,
                                    func.min(Interval.interval_id).label('first_interval'),
@@ -48,7 +53,8 @@ def fuzzy_query(dep_place, arv_place, dg_only, session):
         .join(dep_train_info, Interval.train_id == dep_train_info.c.train_id) \
         .join(arv_train_info, Interval.train_id == arv_train_info.c.train_id) \
         .filter(or_(Interval.dep_station == dep_train_info.c.dep_station,
-                    Interval.arv_station == arv_train_info.c.arv_station)) \
+                    Interval.arv_station == arv_train_info.c.arv_station),
+                Train.available == True) \
         .group_by(Interval.train_id, Train.train_name) \
         .subquery()
     dep_i = aliased(Interval, name='dep_i')
@@ -65,7 +71,9 @@ def fuzzy_query(dep_place, arv_place, dg_only, session):
         .join(arv_i, arv_i.interval_id == raw_train_info.c.last_interval) \
         .join(dep_s, dep_s.station_id == dep_i.dep_station) \
         .join(arv_s, arv_s.station_id == arv_i.arv_station) \
-        .filter(dep_s.station_name.like(dep_place), arv_s.station_name.like(arv_place)) \
+        .filter(dep_s.station_name.like(dep_place), arv_s.station_name.like(arv_place),
+                dep_s.available == True, arv_s.available == True,
+                dep_i.available == True, arv_i.available == True) \
         .order_by(dep_i.dep_datetime) \
         .all()
     return list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
