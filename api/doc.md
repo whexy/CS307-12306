@@ -493,3 +493,71 @@ District information query API
  - `result`: `list` of dictionaries of provinces/cities/districts:
   - `province_name`/`city_name`/`district_name`: `str`
 
+
+# api.admin
+
+
+## AdminStationApi
+```python
+AdminStationApi()
+```
+
+API class for station administration
+
+
+### methods
+
+
+### post
+```python
+AdminStationApi.post(*args, **kwargs)
+```
+
+Station addition API, **JWT required**
+
+**argument**:
+ - `province_name`: `str`
+ - `city_name`: `str`
+ - `district_name`: `str`
+ - `station_name`: `str`
+
+**return**: A JSON dictionary with values
+ - `code`: `int`, equals to 0 if addition is successful
+ - `result`: `str` for success message, shown if `code == 0`
+ - `error`: `str`, shown if `code != 0`
+
+
+### patch
+```python
+AdminStationApi.patch(*args, **kwargs)
+```
+
+Station modification API, **JWT required**
+
+**argument**:
+ - `city_name`: `str`
+ - `district_name`: `str`
+ - `station_name`: `str`
+ - `new_station_name`: `str`
+
+**return**: A JSON dictionary with values
+ - `code`: `int`, equals to 0 if modification is successful
+ - `result`: `str` for success message, shown if `code == 0`
+ - `error`: `str`, shown if `code != 0`
+
+
+### delete
+```python
+AdminStationApi.delete(*args, **kwargs)
+```
+
+Station deletion API, **JWT required**
+
+**argument**:
+ - `station_name`: `str`
+
+**return**: A JSON dictionary with values
+ - `code`: `int`, equals to 0 if deletion is successful
+ - `result`: `str` for success message, shown if `code == 0`
+ - `error`: `str`, shown if `code != 0`
+
