@@ -32,6 +32,7 @@ class PurchaseApi(Resource):
             session.flush()
             return "Purchase succeeded"
         except:
+            session.rollback()
             return "Purchase failed"
         finally:
             session.close()
@@ -56,5 +57,7 @@ class PurchaseApi(Resource):
                 return jsonify(code=0, result="paid")
             else:
                 return jsonify(code=0, result="unpaid")
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()

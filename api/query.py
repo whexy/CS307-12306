@@ -171,6 +171,8 @@ class QueryApiV4(Resource):
             dg_only = urllib.parse.unquote(request.args.get('DG_only')).lower() == 'true'
             train_info_list = fuzzy_query(dep_place, arv_place, dg_only, session)
             return jsonify(result=train_info_list, code=0)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()
 
@@ -209,11 +211,13 @@ class QueryTransfer(Resource):
                     second_list = fuzzy_query(transfer_station, arv_place, dg_only, session)
                     if second_list:
                         transfer_id = session.query(Station.station_id) \
-                            .filter(Station.station_name == transfer_station) \
+                            .filter(Station.station_name == transfer_station, Station.available == True) \
                             .first() \
                             .station_id
                         resp.append(dict(stationName=transfer_station, stationId=transfer_id))
             return jsonify(result=resp, code=0)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()
 
@@ -267,5 +271,7 @@ class TicketQuery(Resource):
                 .all()
             resp = list(sorted(map(lambda x: dict(zip(x.keys(), x)), resp), key=lambda x: x['seat_type_id']))
             return jsonify(result=resp, code=0)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()

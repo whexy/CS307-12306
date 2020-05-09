@@ -37,6 +37,9 @@ class SignupApi(Resource):
             session.add(new_user)
             session.commit()
             return jsonify(code=0)
+        except:
+            session.rollback()
+            return jsonify(code=10, error='Unexpected error when creating user')
         finally:
             session.close()
 
@@ -70,6 +73,8 @@ class UserInfoApi(Resource):
             expires = datetime.timedelta(days=1)
             access_token = create_access_token(identity=str(user.user_id), expires_delta=expires)
             return jsonify(token=access_token, code=0)
+        except:
+            return jsonify(code=10, error='Login error')
         finally:
             session.close()
 
@@ -90,6 +95,8 @@ class UserInfoApi(Resource):
             if user is None:
                 return jsonify(error='User not found', code=404)
             return jsonify(result=user.to_dict(), code=0)
+        except:
+            return jsonify(code=10, error='User information query error')
         finally:
             session.close()
 
@@ -133,6 +140,9 @@ class UserInfoApi(Resource):
                 user.hash_password()
             session.commit()
             return jsonify(code=0)
+        except:
+            session.rollback()
+            return jsonify(code=10, error='Update failed')
         finally:
             session.close()
 
@@ -157,5 +167,7 @@ class UserCheckApi(Resource):
             username = request.args.get('username')
             user = session.query(User).filter(User.username == username).first()
             return jsonify(result=(user is None), code=0)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()

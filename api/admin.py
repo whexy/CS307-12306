@@ -154,5 +154,8 @@ class AdminStationApi(Resource):
             station.available = False
             session.commit()
             return jsonify(code=0, result="删除成功")
+        except:
+            session.rollback()
+            return jsonify(code=10, error='操作失败，请联系管理员')
         finally:
             session.close()

@@ -110,5 +110,7 @@ class TicketApi(Resource):
             #     "ticketId": 'Z123456789' [x]
             # }] * 4
             return jsonify(code=0, ticket=tickets)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()

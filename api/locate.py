@@ -44,6 +44,8 @@ class GeoApi(Resource):
                 .all()
             resp = [dict(zip(station.keys(), station)) for station in stations]
             return jsonify(result=resp, code=0)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()
 
@@ -139,6 +141,8 @@ class TrainApiV2(Resource):
             if last_station:
                 resp.append(dict(zip(last_station.keys(), last_station)))
             return jsonify(result=resp, code=0)
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()
 
@@ -178,5 +182,7 @@ class AreaApi(Resource):
                     .join(Province, Province.province_id == City.province_id) \
                     .filter(Province.province_name == province_name, City.city_name == city_name).all()
                 return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), district_list)))
+        except:
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()

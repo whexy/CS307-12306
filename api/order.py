@@ -70,6 +70,9 @@ class OrderApi(Resource):
             session.commit()
             session.flush()
             return jsonify(code=0, result={'order_id': new_order.order_id})
+        except:
+            session.rollback()
+            return jsonify(code=10, error='订票失败')
         finally:
             session.close()
 
@@ -129,5 +132,8 @@ class OrderApi(Resource):
             session.commit()
             session.flush()
             return jsonify(code=0, result="操作成功，票已失效")
+        except:
+            session.rollback()
+            return jsonify(code=10, error='操作失败，请联系管理员')
         finally:
             session.close()
