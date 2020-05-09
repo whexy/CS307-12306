@@ -8,6 +8,9 @@ from api.user import UserInfoApi, SignupApi, UserCheckApi
 
 
 def initialize_routes(api):
+    """
+    Initializes routes for APIs
+    """
     api.add_resource(SignupApi, '/signup')
     api.add_resource(UserInfoApi, '/user')
     api.add_resource(GeoApi, '/geo')

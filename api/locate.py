@@ -1,3 +1,4 @@
+from deprecated import deprecated
 from flask import request, jsonify
 from flask_restful import Resource
 from sqlalchemy import or_, func, String, literal
@@ -8,12 +9,31 @@ from model.models import Province, District, City, Station, Train, Interval
 
 
 class GeoApi(Resource):
+    """
+    API class for geographic position query
+    """
     def get(self):
+        """
+        Geographic position query API
+
+        **argument**:
+         - `geo_name`: `str`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of position information:
+          - `province`: `str`
+          - `city`: `str`
+          - `district`: `str`
+          - `station`: `str`
+        """
         session = DBSession()
         try:
             geo_name = request.args.get('geo_name')
-            stations = session.query(Province.province_name, City.city_name, District.district_name,
-                                     Station.station_name) \
+            stations = session.query(Province.province_name.label('province'),
+                                     City.city_name.label('city'),
+                                     District.district_name.label('district'),
+                                     Station.station_name.label('station')) \
                 .join(District, Station.district_id == District.district_id) \
                 .join(City, District.city_id == City.city_id) \
                 .join(Province, Province.province_id == City.province_id) \
@@ -22,19 +42,17 @@ class GeoApi(Resource):
                             City.city_name.like('%' + geo_name + '%'),
                             Province.province_name.like('%' + geo_name + '%'))) \
                 .all()
-            resp = []
-            for station in stations:
-                resp.append(
-                    dict(province=station[0],
-                         city=station[1],
-                         district=station[2],
-                         station=station[3]))
+            resp = [dict(zip(station.keys(), station)) for station in stations]
             return jsonify(result=resp, code=0)
         finally:
             session.close()
 
 
 class TrainApi(Resource):
+    """
+    API class for train information query _(version 1, deprecated)_
+    """
+    @deprecated
     def get(self):
         train_name = request.args.get('train_name')
         session = DBSession()
@@ -75,7 +93,24 @@ class TrainApi(Resource):
 
 
 class TrainApiV2(Resource):
+    """
+    API class for train information query _(version 2)_
+    """
     def get(self):
+        """
+        Train information query API
+
+        **argument**:
+         - `train_name`: `str`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of passing station information:
+          - `id`: `int`
+          - `district`: `str`
+          - `station`: `str`
+          - `time`: `str`
+        """
         session = DBSession()
         try:
             train_name = request.args.get('train_name')
@@ -109,8 +144,23 @@ class TrainApiV2(Resource):
 
 
 class AreaApi(Resource):
+    """
+    API class for district information query
+    """
     def get(self):
-        # return the list of provinces
+        """
+        District information query API
+
+        **argument**:
+         - `province`: `str`, can be empty
+         - `city`: `str`, can be empty if province is not specified
+         - `district`: `str`, can be empty if city is not specified
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of provinces/cities/districts:
+          - `province_name`/`city_name`/`district_name`: `str`
+        """
         session = DBSession()
         try:
             province_name = request.args.get('province')

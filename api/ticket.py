@@ -10,8 +10,36 @@ from model.models import *
 
 
 class TicketApi(Resource):
+    """
+    API class for purchased tickets query
+    """
     @jwt_required
     def get(self):
+        """
+        Purchased tickets query API, **JWT required**
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of ticket information:
+          - `orderId`: `int`
+          - `price`: `str`
+          - `orderStatus`: `str`
+          - `ticketId`: `str`
+          - `name`: `str`
+          - `idCard`: `str`
+          - `trainName`: `str`
+          - `carriageNumber`: `str`
+          - `seat`: `str`
+          - `seatNumber`: `str`
+          - `seatClass`: `str`
+          - `departStation`: `str`
+          - `departStationEnglish`: `str`
+          - `arrivalStation`: `str`
+          - `arrivalStationEnglish`: `str`
+          - `time`: `str`
+          - `realOrderId`: `str`
+          - `checkEnter`: `str`
+        """
         session = DBSession()
         try:
             user_id = get_jwt_identity()

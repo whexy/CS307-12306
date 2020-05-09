@@ -9,7 +9,24 @@ from model.models import User
 
 
 class SignupApi(Resource):
+    """
+    API class for user sign-up
+    """
     def post(self):
+        """
+        Sign-up API
+
+        The body should be a JSON dictionary including the following attribute(s):
+         - `username`: `str`
+         - `real_name`: `str`
+         - `password`: `str`
+         - `phone_number`: `str`
+         - `email`: `str`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, equals to 0 if sign-up is successful
+         - `error`: `str`, shown if `code != 0`
+        """
         session = DBSession()
         try:
             body = request.get_json()
@@ -25,8 +42,22 @@ class SignupApi(Resource):
 
 
 class UserInfoApi(Resource):
-    # Login API
+    """
+    API class for user information operations
+    """
     def post(self):
+        """
+        Login API
+
+        The body should be a JSON dictionary including the following attribute(s):
+         - `username`: `str`
+         - `password`: `str`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, equals to 0 if login is successful
+         - `token`: `str` representing JWT token, shown if `code == 0`
+         - `error`: `str`, shown if `code != 0`
+        """
         session = DBSession()
         try:
             body = request.get_json()
@@ -42,9 +73,16 @@ class UserInfoApi(Resource):
         finally:
             session.close()
 
-    # Get user info
     @jwt_required
     def get(self):
+        """
+        User information query API, **JWT required**
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, equals to 0 if query is successful
+         - `result`: `dict` containing user information, shown if `code == 0`
+         - `error`: `str`, shown if `code != 0`
+        """
         session = DBSession()
         try:
             user_id = get_jwt_identity()
@@ -57,6 +95,21 @@ class UserInfoApi(Resource):
 
     @jwt_required
     def patch(self):
+        """
+        User information update API, **JWT required**
+
+        The body should be a JSON dictionary including the following attribute(s):
+         - `username`: `str`
+         - `password`: `str`
+         - `new_password`: `str`
+         - `real_name`: `str`
+         - `email`: `str`
+         - `phone_number`: `str`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, equals to 0 if update is successful
+         - `error`: `str`, shown if `code != 0`
+        """
         session = DBSession()
         try:
             body = request.get_json()
@@ -85,7 +138,20 @@ class UserInfoApi(Resource):
 
 
 class UserCheckApi(Resource):
+    """
+    API class for user existence check
+    """
     def get(self):
+        """
+        User existence check API (check by username)
+
+        **argument**:
+         - `username`: `str`
+
+        **return**: A JSON dictionary with values:
+        - `code`: `int`, always equals to 0
+        - `result`: `boolean` indicating if the user exists
+        """
         session = DBSession()
         try:
             username = request.args.get('username')

@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+Python_Deprecated.egg-info/PKG-INFO
+Python_Deprecated.egg-info/SOURCES.txt
+Python_Deprecated.egg-info/dependency_links.txt
+Python_Deprecated.egg-info/not-zip-safe
+Python_Deprecated.egg-info/requires.txt
+Python_Deprecated.egg-info/top_level.txt
+deprecated/__init__.py

@@ -1,5 +1,6 @@
 import urllib.parse
 
+from deprecated import deprecated
 from flask import request, jsonify
 from flask_restful import Resource
 from sqlalchemy import or_, func, BIGINT
@@ -11,9 +12,13 @@ from model.models import *
 
 
 class QueryApi(Resource):
+    """
+    API class for train information query _(version 1, deprecated)_
+    """
+    @deprecated
     def get(self):
-        depart_place = request.args.get('from')
-        arrival_place = request.args.get('to')
+        depart_place = request.args.get('dep_station')
+        arrival_place = request.args.get('arv_station')
         session = DBSession()
         depart_stations = get_nearby_station(depart_place, session)
         arrival_stations = get_nearby_station(arrival_place, session)
@@ -39,9 +44,13 @@ class QueryApi(Resource):
 
 
 class QueryApiV2(Resource):
+    """
+    API class for train information query _(version 2 for SQL test, deprecated)_
+    """
+    @deprecated
     def get(self):
-        depart_place = request.args.get('from')
-        arrival_place = request.args.get('to')
+        depart_place = request.args.get('dep_station')
+        arrival_place = request.args.get('arv_station')
         SQL = '''
         with station_table as
          (
@@ -80,6 +89,10 @@ where i.train_id in
 
 
 class QueryApiV3(Resource):
+    """
+    API class for train information query _(version 3 for station-to-station query, deprecated)_
+    """
+    @deprecated
     def get(self):
         session = DBSession()
         try:
@@ -129,7 +142,28 @@ class QueryApiV3(Resource):
 
 
 class QueryApiV4(Resource):
+    """
+    API class for train information query _(version 4)_
+    """
     def get(self):
+        """
+        Train information query API
+
+        **argument**:
+         - `dep_station`: `str`
+         - `arv_station`: `str`
+         - `DG_only`: `boolean`
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of train information:
+          - `train_name`: `str`
+          - `first_interval`: `int`
+          - `last_interval`: `int`
+          - `dep_station`: `str`
+          - `dep_time`: `str`
+          - `arv_station`: `str`
+          - `arv_time`: `str`
+        """
         session = DBSession()
         try:
             dep_place = '%' + urllib.parse.unquote(request.args.get('dep_station')) + '%'
@@ -142,10 +176,27 @@ class QueryApiV4(Resource):
 
 
 class QueryTransfer(Resource):
+    """
+    API class for transfer station query
+    """
     transfer_list = ('广州南', '杭州东', '上海虹桥', '郑州东', '长沙南', '南京南', '深圳北', '西安北', '济南西', '石家庄',
                      '合肥南', '武汉', '徐州东', '南昌西', '厦门北', '成都东', '北京西')
 
     def get(self):
+        """
+        Transfer station query API
+
+        **argument**:
+         - `dep_station`: `str`
+         - `arv_station`: `str`
+         - `DG_only`: `boolean`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of station information:
+          - `stationName`: `str`
+          - `stationId`: `int`
+        """
         session = DBSession()
         try:
             dep_place = '%' + urllib.parse.unquote(request.args.get('dep_station')) + '%'
@@ -168,7 +219,21 @@ class QueryTransfer(Resource):
 
 
 class TicketQuery(Resource):
+    """
+    API class for available tickets query
+    """
     def get(self):
+        """
+        Available tickets query API
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, always equals to 0
+         - `result`: `list` of dictionaries of ticket information:
+          - `seat_type_id`: `int`
+          - `seat_type_name`: `str`
+          - `left_cnt`: `int`
+          - `price`: `float`
+        """
         session = DBSession()
         try:
             train_name = urllib.parse.unquote(request.args.get('train_name'))
