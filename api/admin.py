@@ -38,21 +38,21 @@ class AdminStationApi(Resource):
             district_name = body.get('district_name')
             station_name = body.get('station_name')
             station = session.query(Station) \
-                .join(District, Station.district_id == District.district_id) \
-                .join(City, District.city_id == City.city_id) \
-                .join(Province, Province.province_id == City.province_id) \
-                .filter(Station.station_name == station_name,
-                        District.district_name == district_name,
-                        City.city_name == city_name,
-                        Province.province_name == province_name) \
+                .filter(Station.station_name == station_name) \
                 .first()
+            exist_flag = False
             if station:
                 if station.available:
                     return jsonify(code=1, error="站名已存在！")
                 else:
-                    station.available = True
-                    session.commit()
-                    return jsonify(code=0, result='添加成功')
+                    district = session.query(District) \
+                        .filter(District.district_id == station.district_id) \
+                        .first()
+                    if district.district_name == district_name:
+                        station.available = True
+                        session.commit()
+                        return jsonify(code=0, result='站点{}添加成功'.format(station_name))
+                    exist_flag = True
             province = session.query(Province).filter(Province.province_name == province_name).first()
             if province is None:
                 new_province = Province(province_name=province_name)
@@ -71,10 +71,14 @@ class AdminStationApi(Resource):
                 session.add(new_district)
                 session.commit()
                 district = session.query(District).filter(District.district_name == district_name).first()
-            station = Station(station_name=station_name, district_id=district.district_id)
-            session.add(station)
+            if exist_flag:
+                station.district_id = district.district_id
+                station.available = True
+            else:
+                station = Station(station_name=station_name, district_id=district.district_id)
+                session.add(station)
             session.commit()
-            return jsonify(code=0, result="站点{}添加成功".format(station_name))
+            return jsonify(code=0, result='站点{}添加成功'.format(station_name))
         except:
             traceback.print_exc()
             session.rollback()
