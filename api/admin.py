@@ -1,3 +1,5 @@
+import traceback
+
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource
@@ -11,6 +13,7 @@ class AdminStationApi(Resource):
     """
     API class for station administration
     """
+
     @jwt_required
     def post(self):
         """
@@ -71,10 +74,11 @@ class AdminStationApi(Resource):
             station = Station(station_name=station_name, district_id=district.district_id)
             session.add(station)
             session.commit()
-            return jsonify(code=0, result="添加成功")
+            return jsonify(code=0, result="站点{}添加成功".format(station_name))
         except:
+            traceback.print_exc()
             session.rollback()
-            return jsonify(code=1, error='添加失败')
+            return jsonify(code=1, error='添加失败，站点已存在或地址信息有误。')
         finally:
             session.close()
 

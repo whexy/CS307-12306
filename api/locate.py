@@ -12,6 +12,7 @@ class GeoApi(Resource):
     """
     API class for geographic position query
     """
+
     def get(self):
         """
         Geographic position query API
@@ -40,7 +41,8 @@ class GeoApi(Resource):
                 .filter(or_(Station.station_name.like('%' + geo_name + '%'),
                             District.district_name.like('%' + geo_name + '%'),
                             City.city_name.like('%' + geo_name + '%'),
-                            Province.province_name.like('%' + geo_name + '%'))) \
+                            Province.province_name.like('%' + geo_name + '%')),
+                        Station.available == True) \
                 .all()
             resp = [dict(zip(station.keys(), station)) for station in stations]
             return jsonify(result=resp, code=0)
@@ -54,6 +56,7 @@ class TrainApi(Resource):
     """
     API class for train information query _(version 1, deprecated)_
     """
+
     @deprecated
     def get(self):
         train_name = request.args.get('train_name')
@@ -98,6 +101,7 @@ class TrainApiV2(Resource):
     """
     API class for train information query _(version 2)_
     """
+
     def get(self):
         """
         Train information query API
@@ -151,6 +155,7 @@ class AreaApi(Resource):
     """
     API class for district information query
     """
+
     def get(self):
         """
         District information query API
