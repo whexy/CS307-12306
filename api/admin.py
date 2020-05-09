@@ -67,7 +67,7 @@ class AdminStationApi(Resource):
                 district = session.query(District).filter(District.district_name == district_name).first()
             current_station.district_id = district.district_id
             session.commit()
-            return jsonify(code=0, result="添加成功")
+            return jsonify(code=0, result="修改成功")
         finally:
             session.close()
 
