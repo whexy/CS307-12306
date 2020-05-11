@@ -27,6 +27,7 @@ The body should be a JSON dictionary including the following attribute(s):
  - `username`: `str`
  - `real_name`: `str`
  - `password`: `str`
+ - `id_card`: `str`
  - `phone_number`: `str`
  - `email`: `str`
 
