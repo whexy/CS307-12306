@@ -109,7 +109,6 @@ class UserInfoApi(Resource):
         The body should be a JSON dictionary including the following attribute(s):
          - `username`: `str`
          - `password`: `str`
-         - `new_password`: `str`
          - `real_name`: `str`
          - `email`: `str`
          - `phone_number`: `str`
@@ -126,9 +125,6 @@ class UserInfoApi(Resource):
             user = session.query(User).filter(User.user_id == user_id).first()
             if user is None:
                 return jsonify(error='User not found', code=404)
-            authorized = user.check_password(body.get('password'))
-            if not authorized:
-                return jsonify(error='Wrong password', code=401)
             if user.username != body.get('username'):
                 new_username = body.get('username')
                 if session.query(User).filter(User.username == new_username).first() is not None:
@@ -137,9 +133,14 @@ class UserInfoApi(Resource):
             user.real_name = body.get('real_name')
             user.email = body.get('email')
             user.phone_number = body.get('phone_number')
-            if body.get('new_password'):
-                user.password = body.get('new_password')
-                user.hash_password()
+            new_password = body.get('password')
+            if new_password:
+                if 8 <= len(new_password) <= 30:
+                    user.password = new_password
+                    user.hash_password()
+                else:
+                    session.rollback()
+                    return jsonify(code=1, error='密码长度错误')
             session.commit()
             return jsonify(code=0, result='用户信息修改成功')
         except:
