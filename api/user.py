@@ -117,6 +117,7 @@ class UserInfoApi(Resource):
         **return**: A JSON dictionary with values:
          - `code`: `int`, equals to 0 if update is successful
          - `error`: `str`, shown if `code != 0`
+         - `result`: `str`, shown if `code == 0`
         """
         session = DBSession()
         try:
@@ -140,7 +141,7 @@ class UserInfoApi(Resource):
                 user.password = body.get('new_password')
                 user.hash_password()
             session.commit()
-            return jsonify(code=0)
+            return jsonify(code=0, result='用户信息修改成功')
         except:
             session.rollback()
             return jsonify(code=10, error='Update failed')

@@ -95,6 +95,7 @@ The body should be a JSON dictionary including the following attribute(s):
 **return**: A JSON dictionary with values:
  - `code`: `int`, equals to 0 if update is successful
  - `error`: `str`, shown if `code != 0`
+ - `result`: `str`, shown if `code == 0`
 
 
 ## UserCheckApi
