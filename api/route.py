@@ -1,4 +1,4 @@
-from api.admin import AdminStationApi
+from api.admin import AdminStationApi, AdminTrainApi
 from api.locate import GeoApi, TrainApi, TrainApiV2, AreaApi
 from api.order import OrderApi
 from api.purchase import PurchaseApi
@@ -28,3 +28,4 @@ def initialize_routes(api):
     api.add_resource(OrderApi, '/order')
     api.add_resource(PurchaseApi, '/purchase')
     api.add_resource(AdminStationApi, '/admin/station')
+    api.add_resource(AdminTrainApi, '/admin/train')

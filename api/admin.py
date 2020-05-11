@@ -3,10 +3,12 @@ import traceback
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource
-from sqlalchemy import or_
+from sqlalchemy import or_, func, String
+from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
-from model.models import Province, District, City, Station, Train, Interval
+from model.Utils import get_interval_list
+from model.models import Province, District, City, Station, Train, Interval, Price
 
 
 class AdminStationApi(Resource):
@@ -165,5 +167,67 @@ class AdminStationApi(Resource):
         except:
             session.rollback()
             return jsonify(code=10, error='操作失败，请联系管理员')
+        finally:
+            session.close()
+
+
+class AdminTrainApi(Resource):
+    """
+    API class for train administration
+    """
+
+    @jwt_required
+    def get(self):
+        """
+        Train information query API for administrator, **JWT required**
+
+        **argument**:
+         - `train_name`: `str`
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, equals to 0 if query is successful
+         - `error`: `str`, shown if `code != 0`
+         - `result`: `list` of dictionaries of interval information:
+          - `interval_id`: `int`
+          - `interval_no`： `int`
+          - `train_name`: `str`
+          - `dep_station`: `str`
+          - `arv_station`: `str`
+          - `dep_datetime`: `str`
+          - `arv_datetime`: `str`
+          - `price`: `dict` containing:
+           - `seat_type_1`, `str`
+           - `seat_type_2`, `str`
+           - `seat_type_3`, `str`
+           - `seat_type_4`, `str`
+           - `seat_type_5`, `str`
+           - `seat_type_6`, `str`
+           - `seat_type_7`, `str`
+        """
+        session = DBSession()
+        try:
+            train_name = request.args.get('train_name')
+            interval_list = get_interval_list(train_name, session)
+            dep_s = aliased(Station, name='dep_s')
+            arv_s = aliased(Station, name='arv_s')
+            res_list = session.query(interval_list.c.interval_id, interval_list.c.interval_no, Train.train_name,
+                                     dep_s.station_name.label('dep_station'), arv_s.station_name.label('arv_station'),
+                                     func.cast(interval_list.c.dep_datetime, String).label('dep_datetime'),
+                                     func.cast(interval_list.c.arv_datetime, String).label('arv_datetime')) \
+                .join(Train, Train.train_id == interval_list.c.train_id) \
+                .join(dep_s, dep_s.station_id == interval_list.c.dep_station) \
+                .join(arv_s, arv_s.station_id == interval_list.c.arv_station) \
+                .order_by(interval_list.c.interval_no) \
+                .all()
+            res_list = list(map(lambda x: dict(zip(x.keys(), x)), res_list))
+            for i in res_list:
+                i['price'] = dict(zip(map(lambda x: 'seat_type_' + str(x), range(1, 8)), ['x'] * 7))
+                price_list = session.query(Price).filter(Price.interval_id == i['interval_id']).all()
+                i['price'].update(
+                    dict(map(lambda x: ('seat_type_{}'.format(x.seat_type_id), '{:.2f}'.format(x.price)), price_list)))
+            return jsonify(code=0, result=res_list)
+        except:
+            traceback.print_exc()
+            return jsonify(code=10, error='Query error')
         finally:
             session.close()
