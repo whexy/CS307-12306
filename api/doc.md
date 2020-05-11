@@ -333,7 +333,7 @@ Payment API
  - `order_id`: `int`
 
 **return**:
- `Purchase succeeded` or `Purchase failed`
+ `Purchase succeeded` or `Purchase failed` or `Already paid`
 
 
 ### post
