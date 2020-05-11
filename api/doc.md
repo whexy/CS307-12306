@@ -87,7 +87,6 @@ User information update API, **JWT required**
 The body should be a JSON dictionary including the following attribute(s):
  - `username`: `str`
  - `password`: `str`
- - `new_password`: `str`
  - `real_name`: `str`
  - `email`: `str`
  - `phone_number`: `str`
