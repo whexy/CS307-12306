@@ -9,6 +9,7 @@ class PurchaseApi(Resource):
     """
     API class for ticket purchase
     """
+
     def get(self):
         """
         Payment API
@@ -17,12 +18,14 @@ class PurchaseApi(Resource):
          - `order_id`: `int`
 
         **return**:
-         `Purchase succeeded` or `Purchase failed`
+         `Purchase succeeded` or `Purchase failed` or `Already paid`
         """
         session = DBSession()
         try:
             order_id = request.args.get('order_id')
             current_order: Order = session.query(Order).filter(Order.order_id == order_id).first()
+            if current_order.order_status == "paid":
+                return "Already paid"
             current_order.order_status = "paid"
             session.commit()
             session.flush()

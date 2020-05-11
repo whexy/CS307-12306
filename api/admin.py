@@ -273,6 +273,7 @@ class AdminTrainApi(Resource):
             return jsonify(code=0, result='修改成功')
         except:
             session.rollback()
+            traceback.print_exc()
             return jsonify(code=10, error='修改失败')
         finally:
             session.close()
