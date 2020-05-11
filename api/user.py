@@ -20,6 +20,7 @@ class SignupApi(Resource):
          - `username`: `str`
          - `real_name`: `str`
          - `password`: `str`
+         - `id_card`: `str`
          - `phone_number`: `str`
          - `email`: `str`
 
