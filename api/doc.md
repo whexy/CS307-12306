@@ -561,3 +561,70 @@ Station deletion API, **JWT required**
  - `result`: `str` for success message, shown if `code == 0`
  - `error`: `str`, shown if `code != 0`
 
+
+## AdminTrainApi
+```python
+AdminTrainApi()
+```
+
+API class for train administration
+
+
+### methods
+
+
+### get
+```python
+AdminTrainApi.get(*args, **kwargs)
+```
+
+Train information query API for administrator, **JWT required**
+
+**argument**:
+ - `train_name`: `str`
+
+**return**: A JSON dictionary with values:
+ - `code`: `int`, equals to 0 if query is successful
+ - `error`: `str`, shown if `code != 0`
+ - `result`: `list` of dictionaries of interval information:
+  - `interval_id`: `int`
+  - `interval_no`： `int`
+  - `train_name`: `str`
+  - `dep_station`: `str`
+  - `arv_station`: `str`
+  - `dep_datetime`: `str`
+  - `arv_datetime`: `str`
+  - `price`: `dict` containing:
+   - `seat_type_1`, `str`
+   - `seat_type_2`, `str`
+   - `seat_type_3`, `str`
+   - `seat_type_4`, `str`
+   - `seat_type_5`, `str`
+   - `seat_type_6`, `str`
+   - `seat_type_7`, `str`
+
+
+### post
+```python
+AdminTrainApi.post(*args, **kwargs)
+```
+
+Train information update API for administrator, **JWT required**
+
+The body should be a JSON dictionary including the following attribute(s):
+ - `interval_id`: `int`
+ - `price`: `dict` containing:
+  - `seat_type_1`, `str`
+  - `seat_type_2`, `str`
+  - `seat_type_3`, `str`
+  - `seat_type_4`, `str`
+  - `seat_type_5`, `str`
+  - `seat_type_6`, `str`
+  - `seat_type_7`, `str`
+
+
+**return**: A JSON dictionary with values:
+ - `code`: `int`, equals to 0 if update is successful
+ - `error`: `str`, shown if `code != 0`
+ - `result`: `str`, shown if `code == 0`
+

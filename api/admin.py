@@ -166,7 +166,7 @@ class AdminStationApi(Resource):
             return jsonify(code=0, result="删除成功")
         except:
             session.rollback()
-            return jsonify(code=10, error='操作失败，请联系管理员')
+            return jsonify(code=10, error='操作失败，请联系运维人员')
         finally:
             session.close()
 
@@ -229,5 +229,50 @@ class AdminTrainApi(Resource):
         except:
             traceback.print_exc()
             return jsonify(code=10, error='Query error')
+        finally:
+            session.close()
+
+    @jwt_required
+    def post(self):
+        """
+        Train information update API for administrator, **JWT required**
+
+        The body should be a JSON dictionary including the following attribute(s):
+         - `interval_id`: `int`
+         - `price`: `dict` containing:
+          - `seat_type_1`, `str`
+          - `seat_type_2`, `str`
+          - `seat_type_3`, `str`
+          - `seat_type_4`, `str`
+          - `seat_type_5`, `str`
+          - `seat_type_6`, `str`
+          - `seat_type_7`, `str`
+
+
+        **return**: A JSON dictionary with values:
+         - `code`: `int`, equals to 0 if update is successful
+         - `error`: `str`, shown if `code != 0`
+         - `result`: `str`, shown if `code == 0`
+        """
+        session = DBSession()
+        try:
+            body = request.get_json()
+            for raw_id, raw_price in body.get('price').items():
+                seat_type_id = int(raw_id[-1])
+                obj_price: Price = session.query(Price) \
+                    .filter(Price.interval_id == body.get('interval_id'),
+                            Price.seat_type_id == seat_type_id) \
+                    .first()
+                if obj_price:
+                    price = float(raw_price)
+                    if price > 0:
+                        obj_price.price = price
+                    else:
+                        raise Exception('')
+            session.commit()
+            return jsonify(code=0, result='修改成功')
+        except:
+            session.rollback()
+            return jsonify(code=10, error='修改失败')
         finally:
             session.close()
