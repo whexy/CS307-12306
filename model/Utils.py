@@ -15,20 +15,22 @@ def get_nearby_station(place, session):
                 Station.available == True)
 
 
-def get_interval_list(train_name, session):
+def get_interval_list(train_name, session, allow_unavailable=False):
     first_id = session.query(Interval.interval_id) \
         .join(Train, Train.train_id == Interval.train_id) \
-        .filter(Train.train_name == train_name, Interval.prev_id == None, Interval.available == True) \
+        .filter(Train.train_name == train_name, Interval.prev_id == None,
+                or_(literal(allow_unavailable), Interval.available == True)) \
         .first() \
         .interval_id
     cte = session.query(Interval, literal(1).label('interval_no')) \
-        .filter(Interval.interval_id == first_id, Interval.available == True) \
+        .filter(Interval.interval_id == first_id, or_(literal(allow_unavailable), Interval.available == True)) \
         .cte(name='cte', recursive=True)
     cte_alias = aliased(cte, name='c')
     i_alias = aliased(Interval, name='i')
     cte = cte.union_all(
         session.query(i_alias, cte_alias.c.interval_no + 1)
-            .filter(i_alias.interval_id == cte_alias.c.next_id, i_alias.available == True)
+            .filter(i_alias.interval_id == cte_alias.c.next_id,
+                    or_(literal(allow_unavailable), i_alias.available == True))
     )
     return cte
 

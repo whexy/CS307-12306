@@ -210,7 +210,7 @@ class AdminTrainApi(Resource):
         session = DBSession()
         try:
             train_name = request.args.get('train_name')
-            interval_list = get_interval_list(train_name, session)
+            interval_list = get_interval_list(train_name, session, True)
             available = session.query(Train.available).filter(Train.train_name == train_name).first().available
             dep_s = aliased(Station, name='dep_s')
             arv_s = aliased(Station, name='arv_s')

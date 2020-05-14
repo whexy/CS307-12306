@@ -1,4 +1,5 @@
 import json
+from operator import or_
 
 from sqlalchemy import literal
 from sqlalchemy.orm import aliased
@@ -8,11 +9,13 @@ from model.models import *
 
 
 def test():
-    train_name = 'Z282'
+    train_name = 'Test000'
+    allow_unavailable = True
     session = DBSession()
     first_id = session.query(Interval.interval_id) \
         .join(Train, Train.train_id == Interval.train_id) \
-        .filter(Train.train_name == train_name, Interval.prev_id == None) \
+        .filter(Train.train_name == train_name, Interval.prev_id == None,
+                or_(literal(allow_unavailable), Interval.available == True)) \
         .first() \
         .interval_id
     cte = session.query(Interval.interval_id, Interval.dep_station, Interval.arv_station, Interval.next_id,
