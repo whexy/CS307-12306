@@ -19,26 +19,26 @@ class TicketApi(Resource):
         Purchased tickets query API, **JWT required**
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `list` of dictionaries of ticket information:
-          - `orderId`: `int`
-          - `price`: `str`
-          - `orderStatus`: `str`
-          - `ticketId`: `str`
-          - `name`: `str`
-          - `idCard`: `str`
-          - `trainName`: `str`
-          - `carriageNumber`: `str`
-          - `seat`: `str`
-          - `seatNumber`: `str`
-          - `seatClass`: `str`
-          - `departStation`: `str`
-          - `departStationEnglish`: `str`
-          - `arrivalStation`: `str`
-          - `arrivalStationEnglish`: `str`
-          - `time`: `str`
-          - `realOrderId`: `str`
-          - `checkEnter`: `str`
+        - `code`: `int`, always equals to 0
+        - `result`: `list` of dictionaries of ticket information:
+            - `orderId`: `int`
+            - `price`: `str`
+            - `orderStatus`: `str`
+            - `ticketId`: `str`
+            - `name`: `str`
+            - `idCard`: `str`
+            - `trainName`: `str`
+            - `carriageNumber`: `str`
+            - `seat`: `str`
+            - `seatNumber`: `str`
+            - `seatClass`: `str`
+            - `departStation`: `str`
+            - `departStationEnglish`: `str`
+            - `arrivalStation`: `str`
+            - `arrivalStationEnglish`: `str`
+            - `time`: `str`
+            - `realOrderId`: `str`
+            - `checkEnter`: `str`
         """
         session = DBSession()
         try:

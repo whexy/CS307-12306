@@ -17,16 +17,16 @@ class SignupApi(Resource):
         Sign-up API
 
         The body should be a JSON dictionary including the following attribute(s):
-         - `username`: `str`
-         - `real_name`: `str`
-         - `password`: `str`
-         - `id_card`: `str`
-         - `phone_number`: `str`
-         - `email`: `str`
+        - `username`: `str`
+        - `real_name`: `str`
+        - `password`: `str`
+        - `id_card`: `str`
+        - `phone_number`: `str`
+        - `email`: `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if sign-up is successful
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if sign-up is successful
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -54,13 +54,13 @@ class UserInfoApi(Resource):
         Login API
 
         The body should be a JSON dictionary including the following attribute(s):
-         - `username`: `str`
-         - `password`: `str`
+        - `username`: `str`
+        - `password`: `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if login is successful
-         - `token`: `str` representing JWT token, shown if `code == 0`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if login is successful
+        - `token`: `str` representing JWT token, shown if `code == 0`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -85,9 +85,9 @@ class UserInfoApi(Resource):
         User information query API, **JWT required**
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if query is successful
-         - `result`: `dict` containing user information, shown if `code == 0`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if query is successful
+        - `result`: `dict` containing user information, shown if `code == 0`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -107,16 +107,16 @@ class UserInfoApi(Resource):
         User information update API, **JWT required**
 
         The body should be a JSON dictionary including the following attribute(s):
-         - `username`: `str`
-         - `password`: `str`
-         - `real_name`: `str`
-         - `email`: `str`
-         - `phone_number`: `str`
+        - `username`: `str`
+        - `password`: `str`
+        - `real_name`: `str`
+        - `email`: `str`
+        - `phone_number`: `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if update is successful
-         - `error`: `str`, shown if `code != 0`
-         - `result`: `str`, shown if `code == 0`
+        - `code`: `int`, equals to 0 if update is successful
+        - `error`: `str`, shown if `code != 0`
+        - `result`: `str`, shown if `code == 0`
         """
         session = DBSession()
         try:
@@ -159,7 +159,7 @@ class UserCheckApi(Resource):
         User existence check API (check by username)
 
         **argument**:
-         - `username`: `str`
+        - `username`: `str`
 
         **return**: A JSON dictionary with values:
         - `code`: `int`, always equals to 0

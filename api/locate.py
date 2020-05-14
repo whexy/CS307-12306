@@ -195,7 +195,8 @@ class AreaApi(Resource):
                     .join(Province, Province.province_id == City.province_id) \
                     .filter(Province.province_name == province_name,
                             City.city_name == city_name,
-                            District.district_name == district_name) \
+                            District.district_name == district_name,
+                            Station.available == True) \
                     .all()
                 return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), station_list)))
         except:

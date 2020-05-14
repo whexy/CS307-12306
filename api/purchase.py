@@ -15,10 +15,10 @@ class PurchaseApi(Resource):
         Payment API
 
         **argument**:
-         - `order_id`: `int`
+        - `order_id`: `int`
 
         **return**:
-         `Purchase succeeded` or `Purchase failed` or `Already paid`
+        `Purchase succeeded` or `Purchase failed` or `Already paid`
         """
         session = DBSession()
         try:
@@ -45,11 +45,11 @@ class PurchaseApi(Resource):
         Ticket payment status query API
 
         The body should be a JSON dictionary including the following attribute(s):
-         - `order_id`: `int`
+        - `order_id`: `int`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `str`, `paid` or `unpaid`
+        - `code`: `int`, always equals to 0
+        - `result`: `str`, `paid` or `unpaid`
         """
         session = DBSession()
         try:

@@ -1,4 +1,5 @@
 import traceback
+from datetime import time
 
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required
@@ -8,7 +9,7 @@ from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
 from model.Utils import get_interval_list
-from model.models import Province, District, City, Station, Train, Interval, Price
+from model.models import Province, District, City, Station, Train, Interval, Price, Seat
 
 
 class AdminStationApi(Resource):
@@ -22,15 +23,15 @@ class AdminStationApi(Resource):
         Station addition API, **JWT required**
 
         **argument**:
-         - `province_name`: `str`
-         - `city_name`: `str`
-         - `district_name`: `str`
-         - `station_name`: `str`
+        - `province_name`: `str`
+        - `city_name`: `str`
+        - `district_name`: `str`
+        - `station_name`: `str`
 
         **return**: A JSON dictionary with values
-         - `code`: `int`, equals to 0 if addition is successful
-         - `result`: `str` for success message, shown if `code == 0`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if addition is successful
+        - `result`: `str` for success message, shown if `code == 0`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -94,15 +95,15 @@ class AdminStationApi(Resource):
         Station modification API, **JWT required**
 
         **argument**:
-         - `city_name`: `str`
-         - `district_name`: `str`
-         - `station_name`: `str`
-         - `new_station_name`: `str`
+        - `city_name`: `str`
+        - `district_name`: `str`
+        - `station_name`: `str`
+        - `new_station_name`: `str`
 
         **return**: A JSON dictionary with values
-         - `code`: `int`, equals to 0 if modification is successful
-         - `result`: `str` for success message, shown if `code == 0`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if modification is successful
+        - `result`: `str` for success message, shown if `code == 0`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -140,12 +141,12 @@ class AdminStationApi(Resource):
         Station deletion API, **JWT required**
 
         **argument**:
-         - `station_name`: `str`
+        - `station_name`: `str`
 
         **return**: A JSON dictionary with values
-         - `code`: `int`, equals to 0 if deletion is successful
-         - `result`: `str` for success message, shown if `code == 0`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if deletion is successful
+        - `result`: `str` for success message, shown if `code == 0`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -179,30 +180,30 @@ class AdminTrainApi(Resource):
     @jwt_required
     def get(self):
         """
-        Train information query API for administrator, **JWT required**
+        Train line information query API for administrator, **JWT required**
 
         **argument**:
-         - `train_name`: `str`
+        - `train_name`: `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if query is successful
-         - `error`: `str`, shown if `code != 0`
-         - `result`: `list` of dictionaries of interval information:
-          - `interval_id`: `int`
-          - `interval_no`： `int`
-          - `train_name`: `str`
-          - `dep_station`: `str`
-          - `arv_station`: `str`
-          - `dep_datetime`: `str`
-          - `arv_datetime`: `str`
-          - `price`: `dict` containing:
-           - `seat_type_1`, `str`
-           - `seat_type_2`, `str`
-           - `seat_type_3`, `str`
-           - `seat_type_4`, `str`
-           - `seat_type_5`, `str`
-           - `seat_type_6`, `str`
-           - `seat_type_7`, `str`
+        - `code`: `int`, equals to 0 if query is successful
+        - `error`: `str`, shown if `code != 0`
+        - `result`: `list` of dictionaries of interval information:
+            - `interval_id`: `int`
+            - `interval_no`： `int`
+            - `train_name`: `str`
+            - `dep_station`: `str`
+            - `arv_station`: `str`
+            - `dep_datetime`: `str`
+            - `arv_datetime`: `str`
+            - `price`: `dict` containing:
+                - `seat_type_1`, `str`
+                - `seat_type_2`, `str`
+                - `seat_type_3`, `str`
+                - `seat_type_4`, `str`
+                - `seat_type_5`, `str`
+                - `seat_type_6`, `str`
+                - `seat_type_7`, `str`
         """
         session = DBSession()
         try:
@@ -233,26 +234,25 @@ class AdminTrainApi(Resource):
             session.close()
 
     @jwt_required
-    def post(self):
+    def patch(self):
         """
-        Train information update API for administrator, **JWT required**
+        Train line price information update API for administrator, **JWT required**
 
         The body should be a JSON dictionary including the following attribute(s):
-         - `interval_id`: `int`
-         - `price`: `dict` containing:
-          - `seat_type_1`, `str`
-          - `seat_type_2`, `str`
-          - `seat_type_3`, `str`
-          - `seat_type_4`, `str`
-          - `seat_type_5`, `str`
-          - `seat_type_6`, `str`
-          - `seat_type_7`, `str`
-
+        - `interval_id`: `int`
+        - `price`: `dict` containing:
+            - `seat_type_1`, `str`
+            - `seat_type_2`, `str`
+            - `seat_type_3`, `str`
+            - `seat_type_4`, `str`
+            - `seat_type_5`, `str`
+            - `seat_type_6`, `str`
+            - `seat_type_7`, `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if update is successful
-         - `error`: `str`, shown if `code != 0`
-         - `result`: `str`, shown if `code == 0`
+        - `code`: `int`, equals to 0 if update is successful
+        - `error`: `str`, shown if `code != 0`
+        - `result`: `str`, shown if `code == 0`
         """
         session = DBSession()
         try:
@@ -275,5 +275,205 @@ class AdminTrainApi(Resource):
             session.rollback()
             traceback.print_exc()
             return jsonify(code=10, error='修改失败')
+        finally:
+            session.close()
+
+    @jwt_required
+    def post(self):
+        """
+        Train line creation API, **JWT required**
+
+        The body should be a JSON dictionary including the following attribute(s):
+        - `train_name`: `str`
+        - `line`: `list` of dictionaries containing:
+            - `dep_station`: `str`
+            - `arv_station`: `str`
+            - `dep_time`: `str`
+            - `arv_time`: `str`
+            - `price`: `dict` containing at least one of:
+                - `seat_type_1`, `str`
+                - `seat_type_2`, `str`
+                - `seat_type_3`, `str`
+                - `seat_type_4`, `str`
+                - `seat_type_5`, `str`
+                - `seat_type_6`, `str`
+                - `seat_type_7`, `str`
+
+        **return**: A JSON dictionary with values:
+        - `code`: `int`, equals to 0 if creation is successful
+        - `error`: `str`, shown if `code != 0`
+        - `result`: `str`, shown if `code == 0`
+        """
+        session = DBSession()
+        try:
+            body = request.get_json()
+            train_name = body.get('train_name')
+            train: Train = session.query(Train).filter(Train.train_name == train_name).first()
+            if train:
+                return jsonify(code=11, error='火车名已存在！')
+            new_train = Train(train_name=train_name)
+            session.add(new_train)
+            session.commit()
+
+            train_id = new_train.train_id
+            interval_id_list = []
+            interval_list = body.get('line')
+            added_seats = False
+            for interval_info in interval_list:
+                dep_station = session.query(Station.station_id) \
+                    .filter(Station.station_name == interval_info['dep_station'], Station.available == True) \
+                    .first() \
+                    .station_id
+                arv_station = session.query(Station.station_id) \
+                    .filter(Station.station_name == interval_info['arv_station'], Station.available == True) \
+                    .first() \
+                    .station_id
+                dep_datetime = None
+                arv_datetime = None
+                if 'dep_time' in interval_info.keys() and interval_info['dep_time']:
+                    dep_datetime = time(*list(map(int, interval_info['dep_time'].split(':'))))
+                if 'arv_time' in interval_info.keys() and interval_info['arv_time']:
+                    arv_datetime = time(*list(map(int, interval_info['arv_time'].split(':'))))
+                new_interval = Interval(train_id=train_id, dep_station=dep_station, arv_station=arv_station,
+                                        dep_datetime=dep_datetime, arv_datetime=arv_datetime)
+                session.add(new_interval)
+                session.commit()
+
+                interval_id = new_interval.interval_id
+                interval_id_list.append(interval_id)
+                price_dict = interval_info['price']
+                if not added_seats:
+                    carriage_number = 1
+                    for k, v in price_dict.items():
+                        seat_type_id = int(k[-1])
+                        seat_price = max(0.01, abs(float(v)))
+                        new_price = Price(interval_id=interval_id, seat_type_id=seat_type_id, price=seat_price)
+                        session.add(new_price)
+                        session.commit()
+                        if seat_type_id == 1:
+                            for _ in range(4):
+                                for i in range(1, 17):
+                                    for j in "ABCDF":
+                                        session.add(Seat(carriage_number=carriage_number,
+                                                         seat_number=str(i) + j,
+                                                         seat_type_id=seat_type_id,
+                                                         occupied='0' * 40,
+                                                         train_id=train_id))
+                                carriage_number += 1
+                        elif seat_type_id == 2:
+                            for _ in range(2):
+                                for i in range(1, 11):
+                                    for j in "ACDF":
+                                        session.add(Seat(carriage_number=carriage_number,
+                                                         seat_number=str(i) + j,
+                                                         seat_type_id=seat_type_id,
+                                                         occupied='0' * 40,
+                                                         train_id=train_id))
+                                carriage_number += 1
+                        elif seat_type_id == 3:
+                            for _ in range(4):
+                                for i in range(1, 17):
+                                    tmp_seat_type_id = 3
+                                    for j in "上中下":
+                                        session.add(Seat(carriage_number=carriage_number,
+                                                         seat_number='{}排{}铺'.format(i, j),
+                                                         seat_type_id=tmp_seat_type_id,
+                                                         occupied='0' * 40,
+                                                         train_id=train_id))
+                                        tmp_seat_type_id += 1
+                                carriage_number += 1
+                        elif seat_type_id == 6:
+                            for _ in range(2):
+                                for i in range(1, 17):
+                                    tmp_seat_type_id = 6
+                                    for j in "上下":
+                                        session.add(Seat(carriage_number=carriage_number,
+                                                         seat_number='{}排{}铺'.format(i, j),
+                                                         seat_type_id=tmp_seat_type_id,
+                                                         occupied='0' * 40,
+                                                         train_id=train_id))
+                                        tmp_seat_type_id += 1
+                                carriage_number += 1
+                    added_seats = True
+                session.commit()
+
+            for index, interval_id in enumerate(interval_id_list):
+                interval = session.query(Interval).filter(Interval.interval_id == interval_id).first()
+                interval.next_id = interval_id_list[index + 1] if index < len(interval_id_list) - 1 else None
+                interval.prev_id = interval_id_list[index - 1] if index > 0 else None
+                session.commit()
+            return jsonify(code=0, result='线路添加成功')
+        except:
+            traceback.print_exc()
+            session.rollback()
+            return jsonify(code=12, error='添加失败，请检查输入是否合法')
+        finally:
+            session.close()
+
+    @jwt_required
+    def put(self):
+        """
+        Train line restore API, **JWT required**
+
+        The body should be a JSON dictionary including the following attribute(s):
+
+        **return**: A JSON dictionary with values:
+        - `code`: `int`, equals to 0 if restoration is successful
+        - `error`: `str`, shown if `code != 0`
+        - `result`: `str`, shown if `code == 0`
+        """
+        session = DBSession()
+        try:
+            body = request.get_json()
+            train_name = body.get('train_name')
+            train = session.query(Train).filter(Train.train_name == train_name,
+                                                Train.available == False).first()
+            if not train:
+                return jsonify(code=12, error='恢复失败，线路在使用中或已删除')
+            interval_list = session.query(Interval).filter(Interval.train_id == train.train_id,
+                                                           Interval.available == False).all()
+            for interval in interval_list:
+                interval.available = True
+            train.available = True
+            session.commit()
+            return jsonify(code=0, result='线路恢复成功')
+        except:
+            traceback.print_exc()
+            session.rollback()
+            return jsonify(code=12, error='恢复失败，请联系运维人员')
+        finally:
+            session.close()
+
+    @jwt_required
+    def delete(self):
+        """
+        Train line disable API, **JWT required**
+
+        The body should be a JSON dictionary including the following attribute(s):
+
+        **return**: A JSON dictionary with values:
+        - `code`: `int`, equals to 0 if deletion is successful
+        - `error`: `str`, shown if `code != 0`
+        - `result`: `str`, shown if `code == 0`
+        """
+        session = DBSession()
+        try:
+            body = request.get_json()
+            train_name = body.get('train_name')
+            train = session.query(Train).filter(Train.train_name == train_name,
+                                                    Train.available == True).first()
+            if not train:
+                return jsonify(code=12, error='停用失败，线路不存在或已停用')
+            interval_list = session.query(Interval).filter(Interval.train_id == train.train_id,
+                                                           Interval.available == True).all()
+            for interval in interval_list:
+                interval.available = False
+            train.available = False
+            session.commit()
+            return jsonify(code=0, result='线路停用成功')
+        except:
+            traceback.print_exc()
+            session.rollback()
+            return jsonify(code=12, error='停用失败，请联系运维人员')
         finally:
             session.close()

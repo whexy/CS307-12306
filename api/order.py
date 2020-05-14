@@ -18,10 +18,10 @@ class OrderApi(Resource):
         Train order API, **JWT required**
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if order is successful
-         - `result`: `dict` with values, shown if `code == 0`:
-          - `order_id`: `int`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if order is successful
+        - `result`: `dict` with values, shown if `code == 0`:
+            - `order_id`: `int`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:
@@ -82,9 +82,9 @@ class OrderApi(Resource):
         Ticket refund API, **JWT required**
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, equals to 0 if deletion is successful
-         - `result`: `str`, shown if `code == 0`
-         - `error`: `str`, shown if `code != 0`
+        - `code`: `int`, equals to 0 if deletion is successful
+        - `result`: `str`, shown if `code == 0`
+        - `error`: `str`, shown if `code != 0`
         """
         session = DBSession()
         try:

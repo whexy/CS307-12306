@@ -189,15 +189,15 @@ class QueryTransfer(Resource):
         Transfer station query API
 
         **argument**:
-         - `dep_station`: `str`
-         - `arv_station`: `str`
-         - `DG_only`: `boolean`
+        - `dep_station`: `str`
+        - `arv_station`: `str`
+        - `DG_only`: `boolean`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `list` of dictionaries of station information:
-          - `stationName`: `str`
-          - `stationId`: `int`
+        - `code`: `int`, always equals to 0
+        - `result`: `list` of dictionaries of station information:
+            - `stationName`: `str`
+             - `stationId`: `int`
         """
         session = DBSession()
         try:
@@ -231,12 +231,12 @@ class TicketQuery(Resource):
         Available tickets query API
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `list` of dictionaries of ticket information:
-          - `seat_type_id`: `int`
-          - `seat_type_name`: `str`
-          - `left_cnt`: `int`
-          - `price`: `float`
+        - `code`: `int`, always equals to 0
+        - `result`: `list` of dictionaries of ticket information:
+            - `seat_type_id`: `int`
+            - `seat_type_name`: `str`
+            - `left_cnt`: `int`
+            - `price`: `float`
         """
         session = DBSession()
         try:

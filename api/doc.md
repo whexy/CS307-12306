@@ -579,7 +579,7 @@ API class for train administration
 AdminTrainApi.get(*args, **kwargs)
 ```
 
-Train information query API for administrator, **JWT required**
+Train line information query API for administrator, **JWT required**
 
 **argument**:
  - `train_name`: `str`
@@ -605,12 +605,12 @@ Train information query API for administrator, **JWT required**
    - `seat_type_7`, `str`
 
 
-### post
+### patch
 ```python
-AdminTrainApi.post(*args, **kwargs)
+AdminTrainApi.patch(*args, **kwargs)
 ```
 
-Train information update API for administrator, **JWT required**
+Train line price information update API for administrator, **JWT required**
 
 The body should be a JSON dictionary including the following attribute(s):
  - `interval_id`: `int`
@@ -623,9 +623,58 @@ The body should be a JSON dictionary including the following attribute(s):
   - `seat_type_6`, `str`
   - `seat_type_7`, `str`
 
-
 **return**: A JSON dictionary with values:
  - `code`: `int`, equals to 0 if update is successful
  - `error`: `str`, shown if `code != 0`
  - `result`: `str`, shown if `code == 0`
+
+
+### post
+```python
+AdminTrainApi.post(*args, **kwargs)
+```
+
+Train line creation API, **JWT required**
+
+The body should be a JSON dictionary including the following attribute(s):
+- `train_name`: `str`
+- `line`: `list` of dictionaries containing:
+    - `dep_station`: `str`
+    - `arv_station`: `str`
+    - `dep_time`: `str`
+    - `arv_time`: `str`
+    - `price`: `dict` containing:
+        - `seat_type_1`, `str`
+        - `seat_type_2`, `str`
+        - `seat_type_3`, `str`
+        - `seat_type_4`, `str`
+        - `seat_type_5`, `str`
+        - `seat_type_6`, `str`
+        - `seat_type_7`, `str`
+
+**return**: A JSON dictionary with values:
+
+
+### put
+```python
+AdminTrainApi.put(*args, **kwargs)
+```
+
+Train line restore API, **JWT required**
+
+The body should be a JSON dictionary including the following attribute(s):
+
+**return**: A JSON dictionary with values:
+
+
+### delete
+```python
+AdminTrainApi.delete(*args, **kwargs)
+```
+
+Train line disable API, **JWT required**
+
+The body should be a JSON dictionary including the following attribute(s):
+
+**return**: A JSON dictionary with values:
 
