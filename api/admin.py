@@ -311,6 +311,8 @@ class AdminTrainApi(Resource):
         try:
             body = request.get_json()
             train_name = body.get('train_name')
+            if not train_name:
+                return jsonify(code=11, error='火车名为空')
             train: Train = session.query(Train).filter(Train.train_name == train_name).first()
             if train:
                 return jsonify(code=11, error='火车名已存在！')
