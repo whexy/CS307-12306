@@ -188,33 +188,36 @@ class AdminTrainApi(Resource):
         **return**: A JSON dictionary with values:
         - `code`: `int`, equals to 0 if query is successful
         - `error`: `str`, shown if `code != 0`
-        - `result`: `list` of dictionaries of interval information:
-            - `interval_id`: `int`
-            - `interval_no`： `int`
-            - `train_name`: `str`
-            - `dep_station`: `str`
-            - `arv_station`: `str`
-            - `dep_datetime`: `str`
-            - `arv_datetime`: `str`
-            - `price`: `dict` containing:
-                - `seat_type_1`, `str`
-                - `seat_type_2`, `str`
-                - `seat_type_3`, `str`
-                - `seat_type_4`, `str`
-                - `seat_type_5`, `str`
-                - `seat_type_6`, `str`
-                - `seat_type_7`, `str`
+        - `result`: `dict` containing:
+            - `available`: `boolean`
+            - `line`: `list` of dictionaries of interval information:
+                - `interval_id`: `int`
+                - `interval_no`： `int`
+                - `train_name`: `str`
+                - `dep_station`: `str`
+                - `arv_station`: `str`
+                - `dep_datetime`: `str`
+                - `arv_datetime`: `str`
+                - `price`: `dict` containing:
+                    - `seat_type_1`, `str`
+                    - `seat_type_2`, `str`
+                    - `seat_type_3`, `str`
+                    - `seat_type_4`, `str`
+                    - `seat_type_5`, `str`
+                    - `seat_type_6`, `str`
+                    - `seat_type_7`, `str`
         """
         session = DBSession()
         try:
             train_name = request.args.get('train_name')
             interval_list = get_interval_list(train_name, session)
+            available = session.query(Train.available).filter(Train.train_name == train_name).first().available
             dep_s = aliased(Station, name='dep_s')
             arv_s = aliased(Station, name='arv_s')
             res_list = session.query(interval_list.c.interval_id, interval_list.c.interval_no, Train.train_name,
                                      dep_s.station_name.label('dep_station'), arv_s.station_name.label('arv_station'),
                                      func.cast(interval_list.c.dep_datetime, String).label('dep_datetime'),
-                                     func.cast(interval_list.c.arv_datetime, String).label('arv_datetime')) \
+                                     func.cast(interval_list.c.arv_datetime, String).label('arv_datetime'),) \
                 .join(Train, Train.train_id == interval_list.c.train_id) \
                 .join(dep_s, dep_s.station_id == interval_list.c.dep_station) \
                 .join(arv_s, arv_s.station_id == interval_list.c.arv_station) \
@@ -226,7 +229,7 @@ class AdminTrainApi(Resource):
                 price_list = session.query(Price).filter(Price.interval_id == i['interval_id']).all()
                 i['price'].update(
                     dict(map(lambda x: ('seat_type_{}'.format(x.seat_type_id), '{:.2f}'.format(x.price)), price_list)))
-            return jsonify(code=0, result=res_list)
+            return jsonify(code=0, result={'line': res_list, 'available': available})
         except:
             traceback.print_exc()
             return jsonify(code=10, error='Query error')
@@ -314,11 +317,12 @@ class AdminTrainApi(Resource):
             new_train = Train(train_name=train_name)
             session.add(new_train)
             session.commit()
+            session.flush()
 
             train_id = new_train.train_id
             interval_id_list = []
             interval_list = body.get('line')
-            added_seats = False
+            seat_type_list = []
             for interval_info in interval_list:
                 dep_station = session.query(Station.station_id) \
                     .filter(Station.station_name == interval_info['dep_station'], Station.available == True) \
@@ -338,66 +342,22 @@ class AdminTrainApi(Resource):
                                         dep_datetime=dep_datetime, arv_datetime=arv_datetime)
                 session.add(new_interval)
                 session.commit()
+                session.flush()
 
                 interval_id = new_interval.interval_id
                 interval_id_list.append(interval_id)
                 price_dict = interval_info['price']
-                if not added_seats:
-                    carriage_number = 1
-                    for k, v in price_dict.items():
-                        seat_type_id = int(k[-1])
-                        if not v:
-                            continue
-                        seat_price = max(0.01, abs(float(v)))
-                        new_price = Price(interval_id=interval_id, seat_type_id=seat_type_id, price=seat_price)
-                        session.add(new_price)
-                        session.commit()
-                        if seat_type_id == 1:
-                            for _ in range(4):
-                                for i in range(1, 17):
-                                    for j in "ABCDF":
-                                        session.add(Seat(carriage_number=carriage_number,
-                                                         seat_number=str(i) + j,
-                                                         seat_type_id=seat_type_id,
-                                                         occupied='0' * 40,
-                                                         train_id=train_id))
-                                carriage_number += 1
-                        elif seat_type_id == 2:
-                            for _ in range(2):
-                                for i in range(1, 11):
-                                    for j in "ACDF":
-                                        session.add(Seat(carriage_number=carriage_number,
-                                                         seat_number=str(i) + j,
-                                                         seat_type_id=seat_type_id,
-                                                         occupied='0' * 40,
-                                                         train_id=train_id))
-                                carriage_number += 1
-                        elif seat_type_id == 3:
-                            for _ in range(4):
-                                for i in range(1, 17):
-                                    tmp_seat_type_id = 3
-                                    for j in "上中下":
-                                        session.add(Seat(carriage_number=carriage_number,
-                                                         seat_number='{}排{}铺'.format(i, j),
-                                                         seat_type_id=tmp_seat_type_id,
-                                                         occupied='0' * 40,
-                                                         train_id=train_id))
-                                        tmp_seat_type_id += 1
-                                carriage_number += 1
-                        elif seat_type_id == 6:
-                            for _ in range(2):
-                                for i in range(1, 17):
-                                    tmp_seat_type_id = 6
-                                    for j in "上下":
-                                        session.add(Seat(carriage_number=carriage_number,
-                                                         seat_number='{}排{}铺'.format(i, j),
-                                                         seat_type_id=tmp_seat_type_id,
-                                                         occupied='0' * 40,
-                                                         train_id=train_id))
-                                        tmp_seat_type_id += 1
-                                carriage_number += 1
-                    added_seats = True
+                for k, v in price_dict.items():
+                    seat_type_id = int(k[-1])
+                    if seat_type_id not in seat_type_list:
+                        seat_type_list.append(seat_type_id)
+                    if not v:
+                        continue
+                    seat_price = max(0.01, abs(float(v)))
+                    new_price = Price(interval_id=interval_id, seat_type_id=seat_type_id, price=seat_price)
+                    session.add(new_price)
                 session.commit()
+            session.execute('select add_seats(array {}, {});'.format(seat_type_list, train_id))
 
             for index, interval_id in enumerate(interval_id_list):
                 interval = session.query(Interval).filter(Interval.interval_id == interval_id).first()
