@@ -146,7 +146,7 @@ class TrainApiV2(Resource):
                 resp.append(dict(zip(last_station.keys(), last_station)))
             return jsonify(result=resp, code=0)
         except:
-            return jsonify(code=10, error='Query error')
+            return jsonify(code=10, error='未找到线路')
         finally:
             session.close()
 
