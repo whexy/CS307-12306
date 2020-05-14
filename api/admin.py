@@ -346,6 +346,8 @@ class AdminTrainApi(Resource):
                     carriage_number = 1
                     for k, v in price_dict.items():
                         seat_type_id = int(k[-1])
+                        if not v:
+                            continue
                         seat_price = max(0.01, abs(float(v)))
                         new_price = Price(interval_id=interval_id, seat_type_id=seat_type_id, price=seat_price)
                         session.add(new_price)
