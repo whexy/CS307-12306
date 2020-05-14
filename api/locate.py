@@ -18,15 +18,15 @@ class GeoApi(Resource):
         Geographic position query API
 
         **argument**:
-         - `geo_name`: `str`
+        - `geo_name`: `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `list` of dictionaries of position information:
-          - `province`: `str`
-          - `city`: `str`
-          - `district`: `str`
-          - `station`: `str`
+        - `code`: `int`, always equals to 0
+        - `result`: `list` of dictionaries of position information:
+            - `province`: `str`
+            - `city`: `str`
+            - `district`: `str`
+            - `station`: `str`
         """
         session = DBSession()
         try:
@@ -107,15 +107,15 @@ class TrainApiV2(Resource):
         Train information query API
 
         **argument**:
-         - `train_name`: `str`
+        - `train_name`: `str`
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `list` of dictionaries of passing station information:
-          - `id`: `int`
-          - `district`: `str`
-          - `station`: `str`
-          - `time`: `str`
+        - `code`: `int`, always equals to 0
+        - `result`: `list` of dictionaries of passing station information:
+            - `id`: `int`
+            - `district`: `str`
+            - `station`: `str`
+            - `time`: `str`
         """
         session = DBSession()
         try:
@@ -161,19 +161,20 @@ class AreaApi(Resource):
         District information query API
 
         **argument**:
-         - `province`: `str`, can be empty
-         - `city`: `str`, can be empty if province is not specified
-         - `district`: `str`, can be empty if city is not specified
+        - `province`: `str`, can be empty
+        - `city`: `str`, can be empty if province is not specified
+        - `district`: `str`, can be empty if city is not specified
 
         **return**: A JSON dictionary with values:
-         - `code`: `int`, always equals to 0
-         - `result`: `list` of dictionaries of provinces/cities/districts:
-          - `province_name`/`city_name`/`district_name`: `str`
+        - `code`: `int`, always equals to 0
+        - `result`: `list` of dictionaries of provinces/cities/districts:
+            - `province_name`/`city_name`/`district_name`/`station_name`: `str`
         """
         session = DBSession()
         try:
             province_name = request.args.get('province')
             city_name = request.args.get('city')
+            district_name = request.args.get('district')
             if not province_name:
                 province_list = session.query(Province.province_name).all()
                 return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), province_list)))
@@ -181,12 +182,22 @@ class AreaApi(Resource):
                 city_list = session.query(City.city_name).join(Province, Province.province_id == City.province_id) \
                     .filter(Province.province_name == province_name).all()
                 return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), city_list)))
-            else:
+            elif not district_name:
                 district_list = session.query(District.district_name) \
                     .join(City, City.city_id == District.city_id) \
                     .join(Province, Province.province_id == City.province_id) \
                     .filter(Province.province_name == province_name, City.city_name == city_name).all()
                 return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), district_list)))
+            else:
+                station_list = session.query(Station.station_name) \
+                    .join(District, Station.district_id == District.district_id) \
+                    .join(City, City.city_id == District.city_id) \
+                    .join(Province, Province.province_id == City.province_id) \
+                    .filter(Province.province_name == province_name,
+                            City.city_name == city_name,
+                            District.district_name == district_name) \
+                    .all()
+                return jsonify(code=0, result=list(map(lambda x: dict(zip(x.keys(), x)), station_list)))
         except:
             return jsonify(code=10, error='Query error')
         finally:
