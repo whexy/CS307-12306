@@ -1,0 +1,11 @@
+gunicorn
+gevent
+flask
+requests
+Flask_Cors
+deprecated
+flask_bcrypt
+flask_jwt_extended
+flask_restful
+pypinyin
+SQLAlchemy
