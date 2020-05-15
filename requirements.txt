@@ -9,3 +9,4 @@ flask_jwt_extended
 flask_restful
 pypinyin
 SQLAlchemy
+psycopg2
