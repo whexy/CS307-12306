@@ -36,6 +36,7 @@ class User(Base):
     email = Column(String(45), nullable=False)
     password = Column(String(100), nullable=False)
     id_card = Column(CHAR(18))
+    is_admin = Column(Boolean, nullable=False, server_default=text("false"))
 
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
@@ -50,6 +51,7 @@ class User(Base):
             'real_name': self.real_name,
             'email': self.email,
             'id_card': self.id_card,
+            'is_admin': self.is_admin
         }
 
 
@@ -125,14 +127,17 @@ class Price(Base):
 class Seat(Base):
     __tablename__ = 'seat'
     __table_args__ = (
-        Index('seat_carriage_number_seat_number_interval_id_uindex', 'carriage_number', 'seat_number', 'train_id', unique=True),
+        Index('seat_carriage_number_seat_number_interval_id_uindex', 'carriage_number', 'seat_number', 'train_id',
+              unique=True),
     )
 
-    seat_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('seat_seat_id_seq'::regclass)"))
+    seat_id = Column(Integer, primary_key=True, unique=True,
+                     server_default=text("nextval('seat_seat_id_seq'::regclass)"))
     carriage_number = Column(Integer, nullable=False)
     seat_number = Column(String(10), nullable=False)
     seat_type_id = Column(ForeignKey('seat_type.seat_type_id'), nullable=False, index=True)
-    occupied = Column(BIT(40), nullable=False, server_default=text("B'0000000000000000000000000000000000000000'::\"bit\""))
+    occupied = Column(BIT(40), nullable=False,
+                      server_default=text("B'0000000000000000000000000000000000000000'::\"bit\""))
     train_id = Column(ForeignKey('train.train_id'), nullable=False)
 
     seat_type = relationship('SeatType')
@@ -142,10 +147,12 @@ class Seat(Base):
 class Ticket(Base):
     __tablename__ = 'ticket'
     __table_args__ = (
-        Index('ticket_first_interval_last_interval_seat_id_available_uindex', 'first_interval', 'last_interval', 'seat_id', 'available', unique=True),
+        Index('ticket_first_interval_last_interval_seat_id_available_uindex', 'first_interval', 'last_interval',
+              'seat_id', 'available', unique=True),
     )
 
-    ticket_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('ticket_ticket_id_seq'::regclass)"))
+    ticket_id = Column(Integer, primary_key=True, unique=True,
+                       server_default=text("nextval('ticket_ticket_id_seq'::regclass)"))
     first_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     last_interval = Column(ForeignKey('interval.interval_id'), nullable=False)
     seat_id = Column(ForeignKey('seat.seat_id'), nullable=False)
@@ -176,5 +183,6 @@ class Order(Base):
 class SeatType(Base):
     __tablename__ = 'seat_type'
 
-    seat_type_id = Column(Integer, primary_key=True, unique=True, server_default=text("nextval('table_name_seat_type_id_seq'::regclass)"))
+    seat_type_id = Column(Integer, primary_key=True, unique=True,
+                          server_default=text("nextval('table_name_seat_type_id_seq'::regclass)"))
     name = Column(String(16), nullable=False, unique=True)

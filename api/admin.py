@@ -2,14 +2,28 @@ import traceback
 from datetime import time
 
 from flask import request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restful import Resource
 from sqlalchemy import or_, func, String
 from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
 from model.Utils import get_interval_list
-from model.models import Province, District, City, Station, Train, Interval, Price, Seat
+from model.models import Province, District, City, Station, Train, Interval, Price, Seat, User
+
+
+def check_admin(func):
+    def wrapper(*args, **kwargs):
+        session = DBSession()
+        user_id = get_jwt_identity()
+        is_admin = session.query(User.is_admin).filter(User.user_id == user_id).first()
+        session.close()
+        if is_admin[0]:
+            return func(*args, **kwargs)
+        else:
+            return jsonify(code=10, error='该用户没有管理员权限，无法执行管理员操作')
+
+    return wrapper
 
 
 class AdminStationApi(Resource):
@@ -18,6 +32,7 @@ class AdminStationApi(Resource):
     """
 
     @jwt_required
+    @check_admin
     def post(self):
         """
         Station addition API, **JWT required**
@@ -90,6 +105,7 @@ class AdminStationApi(Resource):
             session.close()
 
     @jwt_required
+    @check_admin
     def patch(self):
         """
         Station modification API, **JWT required**
@@ -136,6 +152,7 @@ class AdminStationApi(Resource):
             session.close()
 
     @jwt_required
+    @check_admin
     def delete(self):
         """
         Station deletion API, **JWT required**
@@ -178,6 +195,7 @@ class AdminTrainApi(Resource):
     """
 
     @jwt_required
+    @check_admin
     def get(self):
         """
         Train line information query API for administrator, **JWT required**
@@ -217,7 +235,7 @@ class AdminTrainApi(Resource):
             res_list = session.query(interval_list.c.interval_id, interval_list.c.interval_no, Train.train_name,
                                      dep_s.station_name.label('dep_station'), arv_s.station_name.label('arv_station'),
                                      func.cast(interval_list.c.dep_datetime, String).label('dep_datetime'),
-                                     func.cast(interval_list.c.arv_datetime, String).label('arv_datetime'),) \
+                                     func.cast(interval_list.c.arv_datetime, String).label('arv_datetime'), ) \
                 .join(Train, Train.train_id == interval_list.c.train_id) \
                 .join(dep_s, dep_s.station_id == interval_list.c.dep_station) \
                 .join(arv_s, arv_s.station_id == interval_list.c.arv_station) \
@@ -237,6 +255,7 @@ class AdminTrainApi(Resource):
             session.close()
 
     @jwt_required
+    @check_admin
     def patch(self):
         """
         Train line price information update API for administrator, **JWT required**
@@ -282,6 +301,7 @@ class AdminTrainApi(Resource):
             session.close()
 
     @jwt_required
+    @check_admin
     def post(self):
         """
         Train line creation API, **JWT required**
@@ -375,6 +395,7 @@ class AdminTrainApi(Resource):
             session.close()
 
     @jwt_required
+    @check_admin
     def put(self):
         """
         Train line restore API, **JWT required**
@@ -409,6 +430,7 @@ class AdminTrainApi(Resource):
             session.close()
 
     @jwt_required
+    @check_admin
     def delete(self):
         """
         Train line disable API, **JWT required**
@@ -425,7 +447,7 @@ class AdminTrainApi(Resource):
             body = request.get_json()
             train_name = body.get('train_name')
             train = session.query(Train).filter(Train.train_name == train_name,
-                                                    Train.available == True).first()
+                                                Train.available == True).first()
             if not train:
                 return jsonify(code=12, error='停用失败，线路不存在或已停用')
             interval_list = session.query(Interval).filter(Interval.train_id == train.train_id,
