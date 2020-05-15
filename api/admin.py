@@ -2,28 +2,14 @@ import traceback
 from datetime import time
 
 from flask import request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from flask_restful import Resource
 from sqlalchemy import or_, func, String
 from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
-from model.Utils import get_interval_list
-from model.models import Province, District, City, Station, Train, Interval, Price, Seat, User
-
-
-def check_admin(func):
-    def wrapper(*args, **kwargs):
-        session = DBSession()
-        user_id = get_jwt_identity()
-        is_admin = session.query(User.is_admin).filter(User.user_id == user_id).first()
-        session.close()
-        if is_admin[0]:
-            return func(*args, **kwargs)
-        else:
-            return jsonify(code=10, error='该用户没有管理员权限，无法执行管理员操作')
-
-    return wrapper
+from model.Utils import get_interval_list, check_admin
+from model.models import Province, District, City, Station, Train, Interval, Price
 
 
 class AdminStationApi(Resource):
@@ -37,7 +23,7 @@ class AdminStationApi(Resource):
         """
         Station addition API, **JWT required**
 
-        **argument**:
+        The body should be a JSON dictionary including the following attribute(s):
         - `province_name`: `str`
         - `city_name`: `str`
         - `district_name`: `str`
@@ -61,7 +47,7 @@ class AdminStationApi(Resource):
             exist_flag = False
             if station:
                 if station.available:
-                    return jsonify(code=1, error="站名已存在！")
+                    return jsonify(code=1, error="站点已存在！")
                 else:
                     district = session.query(District) \
                         .filter(District.district_id == station.district_id) \
@@ -110,7 +96,7 @@ class AdminStationApi(Resource):
         """
         Station modification API, **JWT required**
 
-        **argument**:
+        The body should be a JSON dictionary including the following attribute(s):
         - `city_name`: `str`
         - `district_name`: `str`
         - `station_name`: `str`
@@ -157,7 +143,7 @@ class AdminStationApi(Resource):
         """
         Station deletion API, **JWT required**
 
-        **argument**:
+        The body should be a JSON dictionary including the following attribute(s):
         - `station_name`: `str`
 
         **return**: A JSON dictionary with values
@@ -401,6 +387,7 @@ class AdminTrainApi(Resource):
         Train line restore API, **JWT required**
 
         The body should be a JSON dictionary including the following attribute(s):
+        - `train_name`: `str`
 
         **return**: A JSON dictionary with values:
         - `code`: `int`, equals to 0 if restoration is successful

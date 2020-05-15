@@ -7,7 +7,7 @@ from sqlalchemy import or_, func, BIGINT
 from sqlalchemy.orm import aliased
 
 from model.Database import DBSession
-from model.Utils import get_nearby_station, get_interval_list, fuzzy_query
+from model.Utils import get_nearby_station, get_interval_list, fuzzy_query, check_not_empty
 from model.models import *
 
 
@@ -145,6 +145,7 @@ class QueryApiV4(Resource):
     """
     API class for train information query _(version 4)_
     """
+    @check_not_empty('dep_station', 'arv_station', 'DG_only')
     def get(self):
         """
         Train information query API
@@ -184,6 +185,7 @@ class QueryTransfer(Resource):
     transfer_list = ('广州南', '杭州东', '上海虹桥', '郑州东', '长沙南', '南京南', '深圳北', '西安北', '济南西', '石家庄',
                      '合肥南', '武汉', '徐州东', '南昌西', '厦门北', '成都东', '北京西')
 
+    @check_not_empty('dep_station', 'arv_station', 'DG_only')
     def get(self):
         """
         Transfer station query API
@@ -226,6 +228,7 @@ class TicketQuery(Resource):
     """
     API class for available tickets query
     """
+    @check_not_empty('train_name', 'first_interval', 'last_interval')
     def get(self):
         """
         Available tickets query API

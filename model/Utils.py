@@ -1,6 +1,9 @@
+from flask import jsonify, request
+from flask_jwt_extended import get_jwt_identity
 from sqlalchemy import or_, literal, func
 from sqlalchemy.orm import aliased
 
+from model.Database import DBSession
 from model.models import *
 
 
@@ -80,3 +83,27 @@ def fuzzy_query(dep_place, arv_place, dg_only, session):
         .all()
     return list(filter(lambda x: x['train_name'][0] in 'DG' if dg_only else True,
                        map(lambda x: dict(zip(x.keys(), x)), train_info_list)))
+
+
+def check_admin(fun):
+    def wrapper(*args, **kwargs):
+        session = DBSession()
+        user_id = get_jwt_identity()
+        is_admin = session.query(User.is_admin).filter(User.user_id == user_id).first()
+        session.close()
+        if is_admin[0]:
+            return fun(*args, **kwargs)
+        else:
+            return jsonify(code=10, error='该用户没有管理员权限，无法执行管理员操作')
+    return wrapper
+
+
+def check_not_empty(*req_args):
+    def decorator(fun):
+        def wrapper(*args, **kwargs):
+            for arg in req_args:
+                if not request.args.get(arg):
+                    return jsonify(code=21, error='请求内容不能为空')
+            return fun(*args, **kwargs)
+        return wrapper
+    return decorator

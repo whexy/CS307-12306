@@ -4,7 +4,7 @@ from flask_restful import Resource
 from sqlalchemy import or_, func, String, literal
 
 from model.Database import DBSession
-from model.Utils import get_interval_list
+from model.Utils import get_interval_list, check_not_empty
 from model.models import Province, District, City, Station, Train, Interval
 
 
@@ -13,6 +13,7 @@ class GeoApi(Resource):
     API class for geographic position query
     """
 
+    @check_not_empty('geo_name')
     def get(self):
         """
         Geographic position query API
