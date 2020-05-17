@@ -365,7 +365,7 @@ class AdminTrainApi(Resource):
                     new_price = Price(interval_id=interval_id, seat_type_id=seat_type_id, price=seat_price)
                     session.add(new_price)
                 session.commit()
-            session.execute('select add_seats(array {}, {});'.format(seat_type_list, train_id))
+            session.execute(func.add_seats(seat_type_list, train_id))
 
             for index, interval_id in enumerate(interval_id_list):
                 interval = session.query(Interval).filter(Interval.interval_id == interval_id).first()
